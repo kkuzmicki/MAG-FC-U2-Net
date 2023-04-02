@@ -20,7 +20,7 @@ from u2net import u2net
 def load_model(target, model_name='umxhq', device=torch.device("cpu")):
     model_path = Path(model_name).expanduser()
     if not model_path.exists():
-        print("模型不存在")
+        print("Model does not exist!")
     else:
         with open(Path(model_path, target + '.json'), 'r') as stream:
             results = json.load(stream)
