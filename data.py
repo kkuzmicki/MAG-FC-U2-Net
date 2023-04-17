@@ -8,7 +8,7 @@ import torch
 import tqdm
 import glob
 import numpy as np
-
+import stempeg
 
 class Compose(object):
     def __init__(self, transforms):
@@ -33,9 +33,9 @@ def _augment_channelswap(audio):
     else:
         return audio
 
-
 def load_datasets(args):
 
+    # load all functions from this file with _augment_+(item from list)
     source_augmentations = Compose(
         [globals()['_augment_' + aug] for aug in ['gain', 'channelswap']]
     )
@@ -71,7 +71,7 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
             seed=42,
     ):
         random.seed(seed)
-        self.root = Path(root).expanduser()
+        self.root = Path(root).expanduser() # expand an initial path component ~( tilde symbol) or ~user in the given path to user’s home directory
         self.split = split
         self.sample_rate = sample_rate
         self.seq_duration = seq_duration
@@ -132,10 +132,12 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
         return len(self.tracks) * self.samples_per_track
 
     def get_tracks(self):
-        p = Path(self.root, self.split)
-        for track_path in tqdm.tqdm(p.iterdir(), disable=True):
+        p = Path(self.root, self.split) # musdb18/train
+        for track_path in tqdm.tqdm(p.iterdir(), disable=True): # i.e. musdb18\train\A Classic Education - NightOwl.stem.mp4
+            #print("track_path:", track_path)
             if track_path.is_dir():
                 source_paths = [track_path / s for s in self.source_files]
+                print(source_paths)
                 if not all(sp.exists() for sp in source_paths):
                     print("exclude track ", track_path)
                     continue
@@ -150,13 +152,13 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
                             'min_duration': min_duration
                         })
                 else:
-                    yield ({'path': track_path, 'min_duration': None})
+                    yield ({'path': track_path, 'min_duration': None}) # return do listy?
 
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Dataset Test')
-    parser.add_argument('--root', type=str, default='dataset')
+    parser.add_argument('--root', type=str, default='TARGET')
 
     parser.add_argument('--target', type=str, default='vocals')
 
@@ -173,7 +175,7 @@ if __name__ == "__main__":
     parser.add_argument('--seed', type=int, default=42, metavar='S')
     args, _ = parser.parse_known_args()
 
-    train_dataset,args = load_datasets(parser, args)
+    train_dataset = load_datasets(args) # I deleted parser as argument and args from vars
 
     print("Number of train samples: ", len(train_dataset))
 

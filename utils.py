@@ -1,5 +1,5 @@
 import torch
-# import torchaudio
+import torchaudio
 import os
 import numpy as np
 import math
@@ -8,7 +8,7 @@ def torchaudio_info(path):
     import torchaudio
 
     info = {}
-    si, _ = torchaudio.info(str(path))
+    si = torchaudio.info(str(path)) # deleted , _
     info['samplerate'] = si.rate
     info['samples'] = si.length // si.channels
     info['duration'] = si.length // si.channels
@@ -20,10 +20,10 @@ def torchaudio_loader(path, start=0, dur=None):
     info = torchaudio_info(path)
 
     if dur is None:
-        sig, rate = torchaudio.load(path)
+        sig = torchaudio.load(path) # deleted ,rate
         return sig
     else:
-        sig, rate = torchaudio.load(
+        sig = torchaudio.load( # deleted ,rate
             path, num_frames=dur, offset=start
         )
         return sig

@@ -344,7 +344,7 @@ class RSU4F(nn.Module):#UNet04FRES(nn.Module):
 ### U^2-Net small ###
 class u2net(nn.Module):
 
-    def __init__(self,in_ch=2,out_ch=2,bins):
+    def __init__(self,in_ch=2,out_ch=2,bins=64): # added '=64'
         super(u2net,self).__init__()
 
         self.stage1 = RSU7(in_ch,16,64,bins)
