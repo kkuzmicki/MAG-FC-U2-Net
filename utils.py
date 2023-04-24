@@ -9,9 +9,12 @@ def torchaudio_info(path):
 
     info = {}
     si = torchaudio.info(str(path)) # deleted , _
-    info['samplerate'] = si.rate
-    info['samples'] = si.length // si.channels
-    info['duration'] = si.length // si.channels
+    print(si)
+    info['samplerate'] = si.sample_rate
+    #info['samples'] = si.length // si.channels 
+    info['samples'] = si.num_frames
+    info['duration'] = si.num_frames // si.sample_rate
+    # info['duration'] = si.length // si.channels
     return info
 
 

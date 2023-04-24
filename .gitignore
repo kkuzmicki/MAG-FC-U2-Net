@@ -1,2 +1,5 @@
 musdb18/
 TARGET/
+out/
+results/
+__pycache__/

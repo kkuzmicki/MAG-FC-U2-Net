@@ -40,7 +40,7 @@ def load_datasets(args):
         [globals()['_augment_' + aug] for aug in ['gain', 'channelswap']]
     )
 
-
+    print("AAA")
     train_dataset = FixedSourcesTrackFolderDataset(
         root = args.root,
         target_file='vocals.wav',
@@ -174,7 +174,7 @@ if __name__ == "__main__":
     parser.add_argument('--samples-per-track', type=int, default=32)
     parser.add_argument('--seed', type=int, default=42, metavar='S')
     args, _ = parser.parse_known_args()
-
+    
     train_dataset = load_datasets(args) # I deleted parser as argument and args from vars
 
     print("Number of train samples: ", len(train_dataset))
