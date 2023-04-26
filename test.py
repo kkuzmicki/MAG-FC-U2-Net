@@ -25,7 +25,6 @@ def istft(X, rate=16000, n_fft=1024, n_hopsize=512):
     )
     return audio
 
-
 def median_nan(a):
     return np.median(a[~np.isnan(a)])
 

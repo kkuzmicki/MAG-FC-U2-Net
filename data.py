@@ -49,7 +49,7 @@ def load_datasets(args):
         split='train',
         samples_per_track=args.samples_per_track,
         source_augmentations=source_augmentations,
-        seq_duration = (args.dur-1) * args.hop,
+        seq_duration = (args.dur-1) * args.hop, # 255 * 512 = 130560
         seed = args.seed,
     )
     
@@ -146,7 +146,7 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
                     infos = list(map(load_info, source_paths))
                     # get minimum duration of track
                     min_duration = min(i['duration'] for i in infos)
-                    if min_duration > self.seq_duration:
+                    if min_duration > self.seq_duration: # PROBLEM: min_duration is in seconds, seq_duration is frames number (130560 / 16000 = 8,16 as in thesis)
                         yield ({
                             'path': track_path,
                             'min_duration': min_duration
