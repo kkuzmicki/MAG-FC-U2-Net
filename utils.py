@@ -13,8 +13,8 @@ def torchaudio_info(path):
     info['samplerate'] = si.sample_rate
     #info['samples'] = si.length // si.channels 
     info['samples'] = si.num_frames
-    info['duration'] = si.num_frames // si.sample_rate
-    # info['duration'] = si.length // si.channels
+    # info['duration'] = si.num_frames // si.sample_rate # mine
+    info['duration'] = si.num_frames
     return info
 
 
@@ -27,7 +27,7 @@ def torchaudio_loader(path, start=0, dur=None):
         return sig
     else:
         sig = torchaudio.load( # deleted ,rate
-            path, num_frames=dur, offset=start
+            path, num_frames=dur
         )
         return sig
 

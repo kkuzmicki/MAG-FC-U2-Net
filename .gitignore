@@ -1,6 +1,19 @@
+# directories
+
 musdb18/
 TARGET/
 out/
 results/
 __pycache__/
 DATASET_16kHz/
+musdb18_16kHz/
+musdb18_ORG/
+musdb18_ORG_separated/
+
+
+# audio formats
+*.mp4
+*.wav
+
+# other
+*.pyc

@@ -40,7 +40,6 @@ def load_datasets(args):
         [globals()['_augment_' + aug] for aug in ['gain', 'channelswap']]
     )
 
-    print("AAA")
     train_dataset = FixedSourcesTrackFolderDataset(
         root = args.root,
         target_file='vocals.wav',
@@ -101,7 +100,7 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
         target_audio = load_audio(
             track_path / self.target_file, start=start, dur=self.seq_duration
         )
-        target_audio = self.source_augmentations(target_audio)
+        target_audio = self.source_augmentations(target_audio) # here error occurs
         audio_sources.append(target_audio)
 
         for source in self.interferer_files:
@@ -134,7 +133,7 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
     def get_tracks(self):
         p = Path(self.root, self.split) # musdb18/train
         for track_path in tqdm.tqdm(p.iterdir(), disable=True): # i.e. musdb18\train\A Classic Education - NightOwl.stem.mp4
-            #print("track_path:", track_path)
+
             if track_path.is_dir():
                 source_paths = [track_path / s for s in self.source_files]
                 print(source_paths)
@@ -146,7 +145,7 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
                     infos = list(map(load_info, source_paths))
                     # get minimum duration of track
                     min_duration = min(i['duration'] for i in infos)
-                    if min_duration > self.seq_duration: # PROBLEM: min_duration is in seconds, seq_duration is frames number (130560 / 16000 = 8,16 as in thesis)
+                    if min_duration > self.seq_duration: # PROBLEM: min_duration was (by me) in seconds, seq_duration is frames number (130560 / 16000 = 8,16 as in thesis)
                         yield ({
                             'path': track_path,
                             'min_duration': min_duration
@@ -158,7 +157,7 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Dataset Test')
-    parser.add_argument('--root', type=str, default='TARGET')
+    parser.add_argument('--root', type=str, default='musdb18_16kHz')
 
     parser.add_argument('--target', type=str, default='vocals')
 
@@ -179,11 +178,15 @@ if __name__ == "__main__":
 
     print("Number of train samples: ", len(train_dataset))
 
+    print('TRAIN', train_dataset)
+
     # iterate over dataloader
 
     train_sampler = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=2,
     )
 
-    for x, y in tqdm.tqdm(train_sampler):
+    print(train_sampler)
+
+    for x, y in tqdm.tqdm(train_sampler): # commented
         pass
