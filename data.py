@@ -35,7 +35,13 @@ def _augment_channelswap(audio):
 
 def load_datasets(args):
 
-    # load all functions from this file with _augment_+(item from list)
+    # load all functions from this file with _augment_+(item from list) in its name
+    # iterates through array after 'in', 
+    # for each aug it performs function on the left
+    # there is also a possibility to add condition on the right side
+    # ---
+    # GLOBALS: https://www.w3schools.com/python/python_variables_global.asp
+    # globals saves to dicitionary global vars and FUNCS, key is func name, value is func itself
     source_augmentations = Compose(
         [globals()['_augment_' + aug] for aug in ['gain', 'channelswap']]
     )
@@ -44,7 +50,7 @@ def load_datasets(args):
         root = args.root,
         target_file='vocals.wav',
         interferer_files=['drums.wav','bass.wav','other.wav'] ,
-        sample_rate=args.sample_rate,
+        sample_rate=args.sample_rate, # 16 000
         split='train',
         samples_per_track=args.samples_per_track,
         source_augmentations=source_augmentations,
@@ -72,7 +78,7 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
         random.seed(seed)
         self.root = Path(root).expanduser() # expand an initial path component ~( tilde symbol) or ~user in the given path to user’s home directory
         self.split = split
-        self.sample_rate = sample_rate
+        self.sample_rate = sample_rate # 16 000
         self.seq_duration = seq_duration
         self.random_track_mix = random_track_mix
         self.random_chunks = random_chunks
@@ -80,18 +86,20 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
         # set the input and output files (accept glob)
         self.target_file = target_file
         self.interferer_files = interferer_files
-        self.source_files = [self.target_file] + self.interferer_files
-        self.tracks = list(self.get_tracks())
+        self.source_files = [self.target_file] + self.interferer_files # it's just string list (string var 'target_file' is converted to 1element string, then added to the rest)
+        print(self.source_files) # ['vocals.wav', 'drums.wav', 'bass.wav', 'other.wav']
+        self.tracks = list(self.get_tracks()) # list of pairs {path --- min_duration}
         self.samples_per_track = samples_per_track
 
-    def __getitem__(self, index):
+    # if Shuffle=True, index values will be random
+    def __getitem__(self, index): # single iteration
         # first, get target track
-        index = index // self.samples_per_track
+        index = index // self.samples_per_track # 2502 // 32 floor division is division with round down (i.e. 2.4 >>> 2)
 
         track_path = self.tracks[index]['path']
         min_duration = self.tracks[index]['min_duration']
         if self.random_chunks:
-            start = random.randint(0, min_duration - self.seq_duration)
+            start = random.randint(0, min_duration - self.seq_duration) # song's duration - seq_duration
         else:
             start = 0
 
@@ -130,21 +138,28 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.tracks) * self.samples_per_track
 
+    # because of yields, this is generator creating map/dict of song's paths and their durations
+    # generator iterates through loop as long as hits any yield
+    # if not, then generator is 'empty'
     def get_tracks(self):
         p = Path(self.root, self.split) # musdb18/train
         for track_path in tqdm.tqdm(p.iterdir(), disable=True): # i.e. musdb18\train\A Classic Education - NightOwl.stem.mp4
 
-            if track_path.is_dir():
-                source_paths = [track_path / s for s in self.source_files]
-                print(source_paths)
-                if not all(sp.exists() for sp in source_paths):
+            if track_path.is_dir(): # p.iterdir() checks every directory, this condition is fullfilled when iterator targets folder
+                source_paths = [track_path / s for s in self.source_files] # overrided div op works as concat 2 strings with slash between them
+                # https://stackoverflow.com/questions/53083963/python-pathlib-operator-how-does-it-do-it
+
+                print(source_paths) #[WindowsPath('musdb18_16kHz/train/Matthew Entwistle - Dont You Ever/vocals.wav'), WindowsPath('musdb18_16kHz/train/Matthew Entwistle - Dont You Ever/drums.wav')...
+                
+                if not all(sp.exists() for sp in source_paths): # exclude if there is not every track for proceded song
                     print("exclude track ", track_path)
                     continue
 
-                if self.seq_duration is not None:
-                    infos = list(map(load_info, source_paths))
-                    # get minimum duration of track
-                    min_duration = min(i['duration'] for i in infos)
+                if self.seq_duration is not None: # seq_duration = 130560
+                    infos = list(map(load_info, source_paths)) # create info: samplerate, samples and duration loaded for each instrument path, this is loop
+                    
+                    min_duration = min(i['duration'] for i in infos) # get minimum duration of song's instrument tracks (they should be the same)
+
                     if min_duration > self.seq_duration: # PROBLEM: min_duration was (by me) in seconds, seq_duration is frames number (130560 / 16000 = 8,16 as in thesis)
                         yield ({
                             'path': track_path,
@@ -157,9 +172,9 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Dataset Test')
-    parser.add_argument('--root', type=str, default='musdb18_16kHz')
+    parser.add_argument('--root', type=str, default='musdb18_16kHz') # data root with train and test folders, deeper with song folders
 
-    parser.add_argument('--target', type=str, default='vocals')
+    parser.add_argument('--target', type=str, default='vocals') # what we want to separate
 
     parser.add_argument('--dur', type=int, default=256)
 
@@ -183,7 +198,8 @@ if __name__ == "__main__":
     # iterate over dataloader
 
     train_sampler = torch.utils.data.DataLoader(
-        train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=2,
+        #train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=1, # org
+        train_dataset, batch_size=args.batch_size, shuffle=False, num_workers=1,
     )
 
     print(train_sampler)
