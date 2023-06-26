@@ -1,0 +1,6 @@
+Al James - Schoolboy Facination - accompaniament.wav:
+max 1. kanał: 20469
+max 2. kanal: 26626
+resampling zwraca wartość w zmiennoprzecinkowych
+
+python -m sklearnex my_application.py <<< akceleracja metod scikit-learning

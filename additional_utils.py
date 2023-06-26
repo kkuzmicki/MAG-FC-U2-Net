@@ -6,6 +6,8 @@ import soundfile
 from scipy.io import wavfile
 from scipy import signal
 import matplotlib.pyplot as plt
+import numpy as np
+import sklearn
 
 # audio - [sample index][channel number] i.e. audio[:,0] audio[0,:]
 def show_waveform_2_channels(audio, header):
@@ -27,6 +29,12 @@ def show_waveform_2_channels(audio, header):
     # function to show the plot
     plt.show()
 
+def calculate_differences(arr1, arr2):
+    differences = []
+    for val1, val2 in zip(arr1, arr2):
+        diff = val1 - val2
+        differences.append(diff)
+    return differences
 
 
 def downsample_tracks(origin_directory, target_directory, target_sample_rate):
@@ -55,15 +63,21 @@ def downsample_tracks(origin_directory, target_directory, target_sample_rate):
             # calculate the new number of samples based on the resampling ratio
             target_num_samples = int(origin_num_samples * resampling_ratio)
 
+            print(max(origin_audio[:,0]))
+            print(max(origin_audio[:,1]))
+
             # resampling
             #target_audio = librosa.resample(origin_audio, orig_sr=origin_sample_rate, target_sr=target_sample_rate)
-            target_audio = signal.resample(origin_audio, target_num_samples)
-            #target_audio.shape
+            target_audio = sklearn.utils.resample(origin_audio, n_samples=target_num_samples, random_state=0).astype(int)
+            # target_audio = scipy.resample(origin_audio, target_num_samples).astype(int)
             #target_audio = origin_audio
 
             # plot
             #show_waveform_2_channels(target_audio, 'Original audio waveform')
-
+            print('ORIGINAL MAX: ', np.max(origin_audio))
+            print('TARGET MAX: ', np.max(target_audio))
+            test1 = calculate_differences(origin_audio[:,0], target_audio[:,0])
+            
             # create target directory
             os.makedirs(root.replace(origin_directory, target_directory), exist_ok=True)
 
