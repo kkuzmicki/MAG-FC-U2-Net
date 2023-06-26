@@ -9,6 +9,7 @@ DATASET_16kHz/
 musdb18_16kHz/
 musdb18_ORG/
 musdb18_ORG_separated/
+DATASET_16kHz_2channels/
 
 
 # audio formats

@@ -20,16 +20,16 @@ def torchaudio_info(path):
 
 def torchaudio_loader(path, start=0, dur=None):
     import torchaudio
-    info = torchaudio_info(path)
+    # info = torchaudio_info(path)
 
     if dur is None:
         sig = torchaudio.load(path) # deleted ,rate
-        return sig
+        return sig[0]
     else:
         sig = torchaudio.load( # deleted ,rate
             path, num_frames=dur
         )
-        return sig
+        return sig[0] # added index, because torchaudio.load returns tuple [frames; sample_rate]
 
 
 def soundfile_info(path):

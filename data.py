@@ -16,9 +16,10 @@ class Compose(object):
 
     def __call__(self, audio):
         for t in self.transforms:
-            audio = t(audio)
+            audio = t(audio) # err
         return audio
 
+# -------------------------------------------------------------------
 
 def _augment_gain(audio, low=0.25, high=1.25):
 
@@ -32,6 +33,8 @@ def _augment_channelswap(audio):
         return torch.flip(audio, [0])
     else:
         return audio
+    
+# -------------------------------------------------------------------
 
 def load_datasets(args):
 
@@ -89,16 +92,16 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
         self.source_files = [self.target_file] + self.interferer_files # it's just string list (string var 'target_file' is converted to 1element string, then added to the rest)
         print(self.source_files) # ['vocals.wav', 'drums.wav', 'bass.wav', 'other.wav']
         self.tracks = list(self.get_tracks()) # list of pairs {path --- min_duration}
-        self.samples_per_track = samples_per_track
+        self.samples_per_track = samples_per_track # 32
 
-    # if Shuffle=True, index values will be random
+    # if Shuffle=True, index values will be random; it is called problably 'len' times
     def __getitem__(self, index): # single iteration
         # first, get target track
         index = index // self.samples_per_track # 2502 // 32 floor division is division with round down (i.e. 2.4 >>> 2)
 
         track_path = self.tracks[index]['path']
         min_duration = self.tracks[index]['min_duration']
-        if self.random_chunks:
+        if self.random_chunks: # get random start of song
             start = random.randint(0, min_duration - self.seq_duration) # song's duration - seq_duration
         else:
             start = 0
@@ -108,7 +111,15 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
         target_audio = load_audio(
             track_path / self.target_file, start=start, dur=self.seq_duration
         )
-        target_audio = self.source_augmentations(target_audio) # here error occurs
+        sizev = len(target_audio)
+        sh = target_audio.shape
+        target_audio = target_audio
+
+        # tensors vs arrays (numpy):
+        # tensors are faster on GPU
+        # Tensors are immutable
+
+        target_audio = self.source_augmentations(target_audio) # here error was occuring
         audio_sources.append(target_audio)
 
         for source in self.interferer_files:
@@ -189,20 +200,24 @@ if __name__ == "__main__":
     parser.add_argument('--seed', type=int, default=42, metavar='S')
     args, _ = parser.parse_known_args()
     
+    #train_dataset's type is: FixedSourcesTrackFolderDataset(torch.utils.data.Dataset)
     train_dataset = load_datasets(args) # I deleted parser as argument and args from vars
 
+    # len is overriden and returns: numbers of tracks (100) * samples_per_track (32)
     print("Number of train samples: ", len(train_dataset))
-
-    print('TRAIN', train_dataset)
 
     # iterate over dataloader
 
     train_sampler = torch.utils.data.DataLoader(
-        #train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=1, # org
-        train_dataset, batch_size=args.batch_size, shuffle=False, num_workers=1,
+        #train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=2,
+        train_dataset, batch_size=1, shuffle=False, num_workers=0
     )
 
     print(train_sampler)
 
+    # for x, y in tqdm.tqdm(train_sampler): # commented
     for x, y in tqdm.tqdm(train_sampler): # commented
+        #print('x: ', x, ' y: ', y)
         pass
+
+    print("Data loaded!")
