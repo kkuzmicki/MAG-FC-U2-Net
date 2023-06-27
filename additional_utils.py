@@ -76,8 +76,13 @@ def downsample_tracks(origin_directory, target_directory, target_sample_rate):
             #show_waveform_2_channels(target_audio, 'Original audio waveform')
             print('ORIGINAL MAX: ', np.max(origin_audio))
             print('TARGET MAX: ', np.max(target_audio))
+            print('ORIGINAL MIN: ', np.min(origin_audio))
+            print('TARGET MIN: ', np.min(target_audio))
             test1 = calculate_differences(origin_audio[:,0], target_audio[:,0])
-            
+            print('origin_audio type: ', origin_audio.dtype)
+
+            target_audio = np.asarray(target_audio, dtype=np.int16)
+            print('target_audio type: ', target_audio.dtype)
             # create target directory
             os.makedirs(root.replace(origin_directory, target_directory), exist_ok=True)
 
