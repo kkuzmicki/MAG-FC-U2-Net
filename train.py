@@ -68,7 +68,7 @@ def get_parser():
     parser = argparse.ArgumentParser(description='Music Separation Training')
     parser.add_argument('--local_rank', type=int, default=0)
     parser.add_argument('--nprocs', type=int)
-    parser.add_argument('--root', type=str, default='musdb18_16kHz')
+    parser.add_argument('--root', type=str, default='DATASET_16kHz_2channels')
     # parser.add_argument('--root', type=str, default='../dataset/musdb44')
     parser.add_argument('--model', type=str, default="models/musdb16_model_first")
     parser.add_argument('--pretrained', dest='pretrained', action='store_true')

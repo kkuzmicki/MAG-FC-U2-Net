@@ -113,7 +113,6 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
         )
         sizev = len(target_audio)
         sh = target_audio.shape
-        target_audio = target_audio
 
         # tensors vs arrays (numpy):
         # tensors are faster on GPU
@@ -183,7 +182,7 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Dataset Test')
-    parser.add_argument('--root', type=str, default='musdb18_16kHz') # data root with train and test folders, deeper with song folders
+    parser.add_argument('--root', type=str, default='DATASET_16kHz_2channels') # data root with train and test folders, deeper with song folders
 
     parser.add_argument('--target', type=str, default='vocals') # what we want to separate
 
@@ -194,7 +193,7 @@ if __name__ == "__main__":
     parser.add_argument('--seq-dur', type=float, default=6.0)
     parser.add_argument('--batch-size', type=int, default=16)
 
-    parser.add_argument('--sample-rate', type=int, default=16000)
+    parser.add_argument('--sample-rate', type=int, default=16_000)
 
     parser.add_argument('--samples-per-track', type=int, default=32)
     parser.add_argument('--seed', type=int, default=42, metavar='S')

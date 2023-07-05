@@ -26,7 +26,7 @@ def torchaudio_loader(path, start=0, dur=None):
         sig = torchaudio.load(path) # deleted ,rate
         return sig[0]
     else:
-        sig = torchaudio.load( # deleted ,rate
+        sig = torchaudio.load( # deleted ,rate; tensor has [1 3 4 5 4 ][2 3 4 3 2] format (not pairs [1 2][3 1] like wavfile)
             path, num_frames=dur
         )
         return sig[0] # added index, because torchaudio.load returns tuple [frames; sample_rate]
