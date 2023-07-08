@@ -108,24 +108,23 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
 
         audio_sources = []
 
-        target_audio = load_audio(
-            track_path / self.target_file, start=start, dur=self.seq_duration
+        target_audio = load_audio( # 8,16second == 130560 samples frame
+            track_path / self.target_file, start=start, dur=self.seq_duration # seq_duration = 130560
         )
-        sizev = len(target_audio)
-        sh = target_audio.shape
 
         # tensors vs arrays (numpy):
         # tensors are faster on GPU
         # Tensors are immutable
 
+        # there are augumented voice and accompaniament tracks (but these can be randomized):
         target_audio = self.source_augmentations(target_audio) # here error was occuring
         audio_sources.append(target_audio)
 
-        for source in self.interferer_files:
-            if self.random_track_mix:
+        for source in self.interferer_files: # iterates through [bass.wav, drums.wav etc]
+            if self.random_track_mix: # option: takes from random songs
                 random_idx = random.choice(range(len(self.tracks)))
                 track_path = self.tracks[random_idx]['path']
-                if self.random_chunks:
+                if self.random_chunks: # option: takes random frames
                     min_duration = self.tracks[random_idx]['min_duration']
                     start = random.randint(0, min_duration - self.seq_duration)
 
@@ -138,10 +137,10 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
 
         stems = torch.stack(audio_sources)
         # # apply linear mix over source index=0
-        x = stems.sum(0)
+        x = stems.sum(0) # all sources summed up
 
         # y = stems.reshape(-1, stems.size(2))
-        y = stems[0]
+        y = stems[0] # vocal
 
         return x, y
 
@@ -202,7 +201,7 @@ if __name__ == "__main__":
     #train_dataset's type is: FixedSourcesTrackFolderDataset(torch.utils.data.Dataset)
     train_dataset = load_datasets(args) # I deleted parser as argument and args from vars
 
-    # len is overriden and returns: numbers of tracks (100) * samples_per_track (32)
+    # len is overriden and returns: numbers of songs (100) * samples_per_track (32)
     print("Number of train samples: ", len(train_dataset))
 
     # iterate over dataloader

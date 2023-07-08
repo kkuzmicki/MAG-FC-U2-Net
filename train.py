@@ -80,7 +80,7 @@ def get_parser():
 
     # Trainig Parameters
     parser.add_argument('--epochs', type=int, default=250)
-    parser.add_argument('--batch-size', type=int, default=12)
+    parser.add_argument('--batch-size', type=int, default=13) # 12
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--patience', type=int, default=80)
     parser.add_argument('--weight-decay', type=float, default=0.00001)
@@ -93,7 +93,7 @@ def get_parser():
     parser.add_argument('--hop', type=int, default=512)
     parser.add_argument('--bins', type=int, default=None)
 
-    parser.add_argument('--nb-workers', type=int, default=12)
+    parser.add_argument('--nb-workers', type=int, default=12) # default=12
     parser.add_argument('--device', type=str, default="cuda")
 
     return parser
@@ -163,7 +163,7 @@ def main():
         if args.local_rank == 0:
             utils.save_checkpoint({
                 'epoch': epoch ,
-                'state_dict': model.state_dict(),
+                'state_dict': model.state_dict(), # simply a Python dictionary object that maps each layer to its parameter tensor
                 'best_loss': es.best,
                 'optimizer': optimizer.state_dict(),
                 'scheduler': scheduler.state_dict(),
