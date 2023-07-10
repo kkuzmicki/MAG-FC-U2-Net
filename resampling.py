@@ -9,6 +9,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.io import wavfile
 import scipy
+from multiprocessing import Process
+
+import cupy as cp
+import cupyx.scipy.signal as cp_signal
+
 
 # audio - [sample index][channel number] i.e. audio[:,0] audio[0,:]
 def show_waveform_2_channels(audio, header):
@@ -42,12 +47,27 @@ def show_plot_for_list(list, header):
     plt.title(header)
     plt.show()
 
+def parallel_downsample_tracks(origin_directory, target_directory, target_sample_rate):
+    p1 = Process(target=downsample_tracks, args=(input_directory + '/core1', output_directory, sample_rate))
+    p2 = Process(target=downsample_tracks, args=(input_directory + '/core2', output_directory, sample_rate))
+    p3 = Process(target=downsample_tracks, args=(input_directory + '/core3', output_directory, sample_rate))
+    p4 = Process(target=downsample_tracks, args=(input_directory + '/core4', output_directory, sample_rate))
+    
+    p1.start()
+    p2.start()
+    p3.start()
+    p4.start()
+
+    p1.join()
+    p2.join()
+    p3.join()
+    p4.join()
 
 def downsample_tracks(origin_directory, target_directory, target_sample_rate):
 
     for root, subdirs, files in os.walk(origin_directory):
 
-        for file_name in tqdm.tqdm(files):
+        for file_name in files:
 
             # get WAV file's path
             original_file_directory = root + '\\' + file_name
@@ -76,7 +96,7 @@ def downsample_tracks(origin_directory, target_directory, target_sample_rate):
             # create target directory
             os.makedirs(root.replace(origin_directory, target_directory), exist_ok=True)
 
-            # create directory to target file
+            # create path to target file
             target_file_directory = root.replace(origin_directory, target_directory) + '\\' + file_name
 
             # write modified audio to WAV file
@@ -85,10 +105,12 @@ def downsample_tracks(origin_directory, target_directory, target_sample_rate):
 
 
 if __name__ == "__main__":
-    input_directory = "musdb18_ORG_separated/train"
-    output_directory = "DATASET_16kHz_2channels"
+    input_directory = "musdb18_ORG_separated\\test\\Girls Under Glass - We Feel Alright" # zostalo Girls Under Glass - We Feel Alright
+    output_directory = "DATASET_16kHz_2channels\\test\\Girls Under Glass - We Feel Alright"
     sample_rate = 16000
 
+    ### sequential
     downsample_tracks(input_directory, output_directory, sample_rate)
 
-    #8835072 / 44100
+    ### parallel
+    # parallel_downsample_tracks(input_directory, output_directory, sample_rate)
