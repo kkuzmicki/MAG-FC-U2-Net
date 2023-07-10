@@ -80,7 +80,7 @@ def get_parser():
 
     # Trainig Parameters
     parser.add_argument('--epochs', type=int, default=250)
-    parser.add_argument('--batch-size', type=int, default=13) # 12
+    parser.add_argument('--batch-size', type=int, default=12) # 12
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--patience', type=int, default=80)
     parser.add_argument('--weight-decay', type=float, default=0.00001)
