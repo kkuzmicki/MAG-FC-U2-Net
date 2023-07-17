@@ -1,0 +1,39 @@
+{
+    "args": {
+        "batch_size": 12,
+        "bins": 513,
+        "channels": 2,
+        "device": "cuda",
+        "dur": 256,
+        "epochs": 250,
+        "fft": 1024,
+        "hop": 512,
+        "local_rank": 0,
+        "lr": 0.001,
+        "model": "models/musdb16_model_first",
+        "nb_workers": 12,
+        "nprocs": null,
+        "patience": 80,
+        "pretrained": false,
+        "root": "DATASET_16kHz_2channels",
+        "sample_rate": 16000,
+        "samples_per_track": 100,
+        "seed": 42,
+        "target": "vocals",
+        "weight_decay": 1e-05
+    },
+    "best_epoch": 8,
+    "best_loss": 0.4512455876541438,
+    "epochs_trained": 8,
+    "num_bad_epochs": 0,
+    "train_loss_history": [
+        0.9298151845215179,
+        0.8917597308397579,
+        0.8644333623921414,
+        0.835011459087475,
+        0.8574541424238067,
+        0.8344638926430429,
+        0.840308496858076,
+        0.4512455876541438
+    ]
+}

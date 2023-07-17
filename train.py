@@ -27,6 +27,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
+
 tqdm.monitor_interval = 0
 torch.backends.cudnn.benchmark = True
 
@@ -71,7 +72,8 @@ def get_parser():
     parser.add_argument('--root', type=str, default='DATASET_16kHz_2channels')
     # parser.add_argument('--root', type=str, default='../dataset/musdb44')
     parser.add_argument('--model', type=str, default="models/musdb16_model_first")
-    parser.add_argument('--pretrained', dest='pretrained', action='store_true')
+    #parser.add_argument('--pretrained', dest='pretrained', action='store_true') # originally uncommented
+    parser.add_argument('--pretrained', type=bool, default='true') # originally commented
     parser.add_argument('--target', type=str, default='vocals')
 
     parser.add_argument('--sample-rate', type=int, default=16000)
