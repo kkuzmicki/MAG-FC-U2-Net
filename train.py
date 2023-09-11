@@ -14,7 +14,7 @@ import random
 import os
 import copy
 import math
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from u2net import u2net
 import torch.multiprocessing as mp
 from torch.utils.data.distributed import DistributedSampler
@@ -72,8 +72,8 @@ def get_parser():
     parser.add_argument('--root', type=str, default='DATASET_16kHz_2channels')
     # parser.add_argument('--root', type=str, default='../dataset/musdb44')
     parser.add_argument('--model', type=str, default="models/musdb16_model_first")
-    #parser.add_argument('--pretrained', dest='pretrained', action='store_true') # originally uncommented
-    parser.add_argument('--pretrained', type=bool, default='true') # originally commented
+    parser.add_argument('--pretrained', dest='pretrained', action='store_true') # originally uncommented
+    #parser.add_argument('--pretrained', type=bool, default='true') # originally commented
     parser.add_argument('--target', type=str, default='vocals')
 
     parser.add_argument('--sample-rate', type=int, default=16000)

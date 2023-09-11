@@ -58,8 +58,8 @@ def transform(audio, model, fft, hop, device):
         mag_target = mag_target.cpu().detach()
         
         mag_target = mag_target.reshape(-1, mag_target.shape[-2], mag_target.shape[-1])
-        X = torch.stft(audio, fft, hop, window=torch.hann_window(fft))
-        magnitude, phase = torchaudio.functional.magphase(X)
+        X = torch.stft(audio, fft, hop, window=torch.hann_window(fft), return_complex=True)
+        magnitude, phase = torchaudio.functional.magphase(X) # https://pytorch.org/audio/0.9.0/_modules/torchaudio/functional/functional.html#magphase
         complex = torch.stack((mag_target * torch.cos(phase), mag_target * torch.sin(phase)), -1)
         audio_hat = torch.istft(complex, fft, hop, fft, torch.hann_window(fft)).numpy()
 
