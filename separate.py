@@ -16,26 +16,32 @@ import time
 import matplotlib.pyplot as plt
 import importlib
 from u2net import u2net
+import experiments as ex
 
+# target: 'vocals'
+# model_name: path_to_model
+# device: 'cuda'
+#
+# returns u2net model with weights from .pth file and parameters from .json file
 def load_model(target, model_name='umxhq', device=torch.device("cpu")):
     model_path = Path(model_name).expanduser()
     if not model_path.exists():
         print("Model does not exist!")
     else:
-        with open(Path(model_path, target + '.json'), 'r') as stream:
-            results = json.load(stream)
+        with open(Path(model_path, target + '.json'), 'r') as stream: # opens vocals.json
+            results = json.load(stream) # saves file stream as python object
 
-        target_model_path = next(Path(model_path).glob("%s.pth" % target))
+        target_model_path = next(Path(model_path).glob("%s.pth" % target)) # pth file stores weights of model and structure
         # print(target_model_path)
-        state = torch.load(target_model_path,map_location=device)
+        state = torch.load(target_model_path, map_location=device)
 
-        mymodel = u2net(2,2,results['args']['bins'])
+        mymodel = u2net(2, 2, results['args']['bins'])
         
-        mymodel.load_state_dict(state)
-        mymodel.eval()
-        mymodel.to(device)
+        mymodel.load_state_dict(state) # inherited method, loads pytorch model as pytorch model (ML model)
+        mymodel.eval() # sets model to evaluation / 'testing' mode
+        mymodel.to(device) # moves to CUDA
 
-        params = {
+        params = { # saves results from .json file
             'fft': results['args']['fft'],
             'hop': results['args']['hop'],
             'dur': results['args']['dur'],
@@ -45,44 +51,52 @@ def load_model(target, model_name='umxhq', device=torch.device("cpu")):
         }
         return mymodel, params
 
-
-def transform(audio, model, fft, hop, device):
+def transform(audio, model, fft, hop, device): # audio >>> torch.Size([2, 130560])
     with torch.no_grad():
-
-        audio_torch = utils.Spectrogram(utils.STFT(audio[None, ...], None, fft, hop))
+        audio_stft = utils.STFT(audio[None, ...], None, fft, hop) # audio_stft's size: torch.Size([1, 2, 513, 128, 2]); in index: None == np.newaxis
+        audio_torch = utils.Spectrogram(audio_stft) # audio_torch's shape: torch.Size([1, 2, 513, 128])
         audio_torch = audio_torch.to(device)
         mag_target = model(audio_torch)
 
         mag_target, mag_mask = model(audio_torch)
         mag_target = mag_target * F.sigmoid(mag_mask)
         mag_target = mag_target.cpu().detach()
-        
-        mag_target = mag_target.reshape(-1, mag_target.shape[-2], mag_target.shape[-1])
-        X = torch.stft(audio, fft, hop, window=torch.hann_window(fft), return_complex=True)
-        magnitude, phase = torchaudio.functional.magphase(X) # https://pytorch.org/audio/0.9.0/_modules/torchaudio/functional/functional.html#magphase
+
+        mag_target = mag_target.reshape(-1, mag_target.shape[-2], mag_target.shape[-1]) # after: torch.Size([2, 513, 128])
+        X = torch.stft(audio, fft, hop, window=torch.hann_window(fft), return_complex=True) # after: torch.Size([2, 513, 256])
+        magnitude, phase = ex.magphase(X) # https://pytorch.org/audio/0.9.0/_modules/torchaudio/functional/functional.html#magphase
+        #X = torch.view_as_complex(X)
+        #magnitude = torch.abs(X) # torch.Size([2, 513, 256])
+        #phase = torch.angle(X) # torch.Size([2, 513, 256])
         complex = torch.stack((mag_target * torch.cos(phase), mag_target * torch.sin(phase)), -1)
         audio_hat = torch.istft(complex, fft, hop, fft, torch.hann_window(fft)).numpy()
 
     return audio_hat
 
-
+# 'C:\\Users\\kkuzm\\Desktop\\MAG-FC-U2-Net\\DATASET_16kHz_2channels\\test\\Al James - Schoolboy Facination\\mixture.wav'
+# 'vocals'
+# 'C:\\Users\\kkuzm\\Desktop\\MAG-FC-U2-Net\\models\\musdb16_model_first'
+# type='cuda'
+#
+# takes model, input file and separates target
 def separate(
         input_file, target, model_name='umxhq', device=torch.device("cpu")
 ):
 
-    Model, params = load_model(target=target, model_name=model_name, device=device)
+    Model, params = load_model(target=target, model_name=model_name, device=device) # returns created u2net model with weights from .pth file, and parameters from .json file
 
-    fft = params['fft']
-    hop = params['hop']
-    dur = params['dur']
+    # saved model parameters
+    fft = params['fft'] # 1024
+    hop = params['hop'] # 512
+    dur = params['dur'] # 256
 
-    channels = params['channels']
-    sample_rate = params['sample_rate']
+    channels = params['channels'] # 2
+    model_sample_rate = params['sample_rate'] # 16000
 
-    audio, rate = torchaudio.load(input_file)
+    audio, file_sample_rate = torchaudio.load(input_file) # audio shape: torch.Size([2, 3205468]), i.e.: [1322, 4324], [4324, 324], ...
 
-    if rate != sample_rate:
-        audio = torchaudio.transforms.Resample(rate, sample_rate)(audio)
+    if file_sample_rate != model_sample_rate:
+        audio = torchaudio.transforms.Resample(file_sample_rate, model_sample_rate)(audio)
 
     if channels == 1:
         if audio.shape[0] == 2:
@@ -91,11 +105,11 @@ def separate(
         if audio.shape[0] == 1:
             audio = audio.repeat(2, 1)
 
-    total_length = audio.shape[1]
-    window = hop * (dur * 1 - 1)
-    stride = window // 2
-    rest = stride - (total_length - window)%stride
-    audio = torch.cat([audio, torch.zeros((channels, rest))], -1)
+    total_length = audio.shape[1] # 3205468
+    window = hop * (dur * 1 - 1) # 130560
+    stride = window // 2 # 65280
+    rest = stride - (total_length - window)%stride # 58532
+    audio = torch.cat([audio, torch.zeros((channels, rest))], -1) # audio >>> torch.Size([2, 3264000])
     start = 0
     num = np.zeros((channels, audio.shape[1]))
     audio_sum = np.zeros((channels, audio.shape[1]))
@@ -106,17 +120,14 @@ def separate(
 
         audio_hat = transform(audio_split, Model, fft, hop, device)
 
-        audio_sum[..., start:start + window] = audio_hat / num[..., start:start + window] + audio_sum[
-                                                                                                        ...,
-                                                                                                        start:start + window] * (
-                                                                num[..., start:start + window] - 1) / num[...,
-                                                                                                            start:start + window]
+        audio_sum[..., start:start + window] = audio_hat / num[..., start:start + window] 
+        + audio_sum[..., start:start + window] * (num[..., start:start + window] - 1) / num[..., start:start + window]
+
         start += stride
 
     audio_sum = audio_sum[:,:-rest]
 
     return audio_sum.T, params
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Music Separation')

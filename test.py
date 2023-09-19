@@ -38,18 +38,18 @@ def test_eval(args):
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    result = pd.DataFrame(columns=['track','SDR','ISR', 'SIR', 'SAR'])
+    result = pd.DataFrame(columns=['track', 'SDR', 'ISR', 'SIR', 'SAR'])
     reference_dir = Path(args.root, 'test')
     output_dir = Path(args.output_dir, Path(args.model).name, 'museval')
     
     for track in tqdm.tqdm(tracks):
-        input_file = str(Path(track, args.input))
+        input_file = str(Path(track, args.input)) # songs_name/mixture.wav
 
         estimate, params = separate.separate(
-            input_file,
-            target=args.target,
-            model_name=args.model,
-            device=device,
+            input_file, # 'C:\\Users\\kkuzm\\Desktop\\MAG-FC-U2-Net\\DATASET_16kHz_2channels\\test\\Al James - Schoolboy Facination\\mixture.wav'
+            target=args.target, # 'vocals'
+            model_name=args.model, # 'C:\\Users\\kkuzm\\Desktop\\MAG-FC-U2-Net\\models\\musdb16_model_first'
+            device=device, # type='cuda'
         )
 
         output_path = Path(args.output_dir, Path(args.model).stem, 'estimates', Path(input_file).parent.name)

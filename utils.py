@@ -17,7 +17,6 @@ def torchaudio_info(path):
     info['duration'] = si.num_frames
     return info
 
-
 def torchaudio_loader(path, start=0, dur=None):
     import torchaudio
     # info = torchaudio_info(path)
@@ -31,7 +30,6 @@ def torchaudio_loader(path, start=0, dur=None):
         )
         return sig[0] # added index, because torchaudio.load returns tuple [frames; sample_rate]
 
-
 def soundfile_info(path):
     import soundfile
     info = {}
@@ -40,7 +38,6 @@ def soundfile_info(path):
     info['samples'] = int(sfi.duration * sfi.samplerate)
     info['duration'] = int(sfi.duration * sfi.samplerate)
     return info
-
 
 def soundfile_loader(path, start=0, dur=None):
     import soundfile
@@ -150,17 +147,16 @@ class EarlyStopping(object):
 
 def STFT(x, device, n_fft=4096, n_hop=1024):
     nb_samples, nb_channels, nb_timesteps = x.size() # while error: batch-size, channels, number of samples (130560)
-    x = x.reshape(nb_samples * nb_channels, -1) # after reshape: shape[26, 130560]
-    x = torch.stft(
+    x = x.reshape(nb_samples * nb_channels, -1) # after reshape: shape[26, 130560]; test.py: torch.Size([2, 130560])
+    x = torch.stft( 
         x,
         n_fft=n_fft, hop_length=n_hop,
         window=torch.hann_window(n_fft, device=device),
         center=True, normalized=False, onesided=True, pad_mode='constant', return_complex=True
-    )
-    x = x.contiguous().view(nb_samples, nb_channels, n_fft // 2 + 1, -1, 2)
+    ) # torch.Size([2, 513, 256])
+    x = x.contiguous().view(nb_samples, nb_channels, n_fft // 2 + 1, -1, 2) # after that: torch.Size([1, 2, 513, 128, 2])
 
     return x
-
 
 def ComplexFFT(x):
     x = x.permute(0, 1, 4, 2, 3)
@@ -172,8 +168,6 @@ def Spectrogram(x):
 
     return x
     # return torch.log10(x + 1)
-
-
 
 if __name__ == "__main__":
     from scipy import signal

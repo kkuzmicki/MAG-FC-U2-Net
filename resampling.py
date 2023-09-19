@@ -11,10 +11,6 @@ from scipy.io import wavfile
 import scipy
 from multiprocessing import Process
 
-import cupy as cp
-import cupyx.scipy.signal as cp_signal
-
-
 # audio - [sample index][channel number] i.e. audio[:,0] audio[0,:]
 def show_waveform_2_channels(audio, header):
     # 1. channel
@@ -83,7 +79,7 @@ def downsample_tracks(origin_directory, target_directory, target_sample_rate):
             # calculate the new number of samples based on the resampling ratio
             target_num_samples = int(origin_num_samples * resampling_ratio)
 
-            # resampling [1 2][3 4][2 -3]...[5 6] [1 3 4 5 5 33 2][1 2 3 3 3 2 3]
+            # resampling [1 2][3 4][2 -3]...[5 6] into [1 3 4 5 5 33 2][1 2 3 3 3 2 3]
             target_audio_L = scipy.signal.resample(origin_audio[:,0], target_num_samples).astype(int)
             target_audio_L = np.array(target_audio_L, np.int16)
 
