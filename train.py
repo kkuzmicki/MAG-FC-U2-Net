@@ -22,15 +22,11 @@ from torch.nn.parallel import DistributedDataParallel
 from torch import distributed
 # python -m torch.distributed.launch --nproc_per_node=4 train.py
 
-
 import warnings
 warnings.filterwarnings('ignore')
 
-
-
 tqdm.monitor_interval = 0
 torch.backends.cudnn.benchmark = True
-
 
 def train(args, model, device, train_loader, optimizer, scaler):
     losses = []

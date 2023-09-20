@@ -47,7 +47,6 @@ def load_model(target, model_name='umxhq', device=torch.device("cpu")):
             'dur': results['args']['dur'],
             'channels': results['args']['channels'],
             'sample_rate': results['args']['sample_rate'],
-
         }
         return mymodel, params
 
@@ -80,7 +79,7 @@ def transform(audio, model, fft, hop, device): # audio >>> torch.Size([2, 130560
 #
 # takes model, input file and separates target
 def separate(
-        input_file, target, model_name='umxhq', device=torch.device("cpu")
+        input_file_path, target, model_name='umxhq', device=torch.device("cpu")
 ):
 
     Model, params = load_model(target=target, model_name=model_name, device=device) # returns created u2net model with weights from .pth file, and parameters from .json file
@@ -93,8 +92,9 @@ def separate(
     channels = params['channels'] # 2
     model_sample_rate = params['sample_rate'] # 16000
 
-    audio, file_sample_rate = torchaudio.load(input_file) # audio shape: torch.Size([2, 3205468]), i.e.: [1322, 4324], [4324, 324], ...
+    audio, file_sample_rate = torchaudio.load(input_file_path) # audio shape: torch.Size([2, 3205468]), i.e.: [1322, 4324], [4324, 324], ...
 
+    # if test song isn't the same sample rate as model, then test song is resampled
     if file_sample_rate != model_sample_rate:
         audio = torchaudio.transforms.Resample(file_sample_rate, model_sample_rate)(audio)
 

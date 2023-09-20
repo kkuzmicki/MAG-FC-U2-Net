@@ -142,6 +142,7 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
         # y = stems.reshape(-1, stems.size(2))
         y = stems[0] # vocal
 
+        # x: torch.Size([2, 130560]) y: torch.Size([2, 130560])
         return x, y
 
     def __len__(self):

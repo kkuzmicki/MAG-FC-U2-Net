@@ -145,16 +145,19 @@ class EarlyStopping(object):
             self.is_better = lambda a, best: a > best + min_delta
 
 
-def STFT(x, device, n_fft=4096, n_hop=1024):
-    nb_samples, nb_channels, nb_timesteps = x.size() # while error: batch-size, channels, number of samples (130560)
-    x = x.reshape(nb_samples * nb_channels, -1) # after reshape: shape[26, 130560]; test.py: torch.Size([2, 130560])
+def STFT(x, device, n_fft=4096, n_hop=1024): # n_fft = 1024; n_hop = 512
+    nb_samples, nb_channels, nb_timesteps = x.size() # train.py: torch.Size([12, 2, 130560]) # 12 is number of songs
+    x = x.reshape(nb_samples * nb_channels, -1) # train.py: shape[24, 130560]; test.py: torch.Size([2, 130560]) # channels and songs merge here as each one separate track (so for 2 ch it doubles)
+    
+    # torch.stft(input:must be either a 1-D time sequence or a 2-D batch/group of time sequences, )
     x = torch.stft( 
         x,
         n_fft=n_fft, hop_length=n_hop,
         window=torch.hann_window(n_fft, device=device),
         center=True, normalized=False, onesided=True, pad_mode='constant', return_complex=True
-    ) # torch.Size([2, 513, 256])
-    x = x.contiguous().view(nb_samples, nb_channels, n_fft // 2 + 1, -1, 2) # after that: torch.Size([1, 2, 513, 128, 2])
+    ) # train.py: torch.Size([24, 513, 256]) | test.py: torch.Size([2, 513, 256])
+    #x = x.contiguous().view(nb_samples, nb_channels, n_fft // 2 + 1, -1, 2) # after that: torch.Size([1, 2, 513, 128, 2]) # originally uncommented
+    x = x.contiguous().view(nb_samples, nb_channels, n_fft // 2 + 1, -1) # train.py: torch.Size([12, 2, 513, 256]) | test.py: torch.Size([1, 2, 513, 256]) # originally didn't exist
 
     return x
 
