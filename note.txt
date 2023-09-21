@@ -1,0 +1,6 @@
+8,16 / 256 sampli przez hop są co połowę okresu 
+
+513 - liczba częstotliwości (wykładniczo), czyli liczba wierszy w spektrogramie
+256 - liczba kolumn w spektrogramie
+
+może jest ,2 bo hop skacze o połowę, tj. hop jest 512, a długość 1024
