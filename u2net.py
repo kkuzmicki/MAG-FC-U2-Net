@@ -377,11 +377,11 @@ class u2net(nn.Module):
 
     def forward(self,x):
 
-        mix = x
+        mix = x # test.py: orch.Size([1, 2, 513, 128])
 
-        x = x.permute(0, 1, 3, 2)
+        x = x.permute(0, 1, 3, 2) # changes order
 
-        hx = x
+        hx = x # torch.Size([1, 2, 128, 513])
 
         #stage 1
         hx1 = self.stage1(hx)

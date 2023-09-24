@@ -28,22 +28,36 @@ warnings.filterwarnings('ignore')
 tqdm.monitor_interval = 0
 torch.backends.cudnn.benchmark = True
 
+# 1. Change mode to 'train'
+# 2. Get 8,12seconds fragmets from song in waveform format
+# 3. Turn this waveforms to spectrograms
+# 4. mask???
+# 5. Let model give output from spectrogram (X) on the input
+# 6. For this output, loss function's value is calculated
+# 7. This loss function's value is given to scaler
+# 8. Scaler gives it to optimizer
+# 9. Optimizer changes weights etc. (directly not visible in code below)
+# 10. loss value is saved
+# 11. Repeat for each song multiple times
+# 12. At the end of each epoch, this function returns average of all loss values from this epoch
 def train(args, model, device, train_loader, optimizer, scaler):
     losses = []
-    model.train()
+    model.train() # changes model's mode to 'train' - some layers behave differently while training from while testing
 
+    # x - mixture (all tracks summed up) | y - vocal
     for x, y in tqdm.tqdm(train_loader):
 
-        x, y = x.to(device), y.to(device)
+        x, y = x.to(device), y.to(device) # train.py: x >>> torch.Size([12, 2, 130560]) y >>> torch.Size([12, 2, 130560])
 
-        X = utils.Spectrogram(utils.STFT(x, device, args.fft, args.hop))
-        Y = utils.Spectrogram(utils.STFT(y, device, args.fft, args.hop))
-        X = X[:,:,:args.bins,:]
-        Y = Y[:,:,:args.bins,:]
+        X = utils.Spectrogram(utils.STFT(x, device, args.fft, args.hop)) # train.py: torch.Size([12, 2, 513, 128])
+        Y = utils.Spectrogram(utils.STFT(y, device, args.fft, args.hop)) # train.py: torch.Size([12, 2, 513, 128])
+        X = X[:,:,:args.bins,:] # train.py: torch.Size([12, 2, 513, 128]) (arg.bins by default is 513)
+        Y = Y[:,:,:args.bins,:] # train.py: torch.Size([12, 2, 513, 128])
         
-        mask = torch.ones_like(Y).to(device)
-        mask[Y*10/5<X] = 0.0
-        optimizer.zero_grad()
+        mask = torch.ones_like(Y).to(device) # Returns a tensor filled with the scalar value 1, with the same size as input # train.py: torch.Size([12, 2, 513, 128])
+        mask[Y*10/5<X] = 0.0 # torch.Size([12, 2, 513, 128])
+        optimizer.zero_grad() # Sets the gradients of all optimized torch. Tensor s to zero.
+
         # print(X.shape)
         with torch.cuda.amp.autocast():
 
@@ -113,12 +127,13 @@ def main():
 
     train_dataset = data.load_datasets(args)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
-        num_workers=args.nb_workers,pin_memory=False
+        num_workers=args.nb_workers, pin_memory=False
     )
 
     model = u2net(2,2,args.bins).to(device)
     # model = myModel(args).to(device)
 
+    # https://www.analyticsvidhya.com/blog/2021/10/a-comprehensive-guide-on-deep-learning-optimizers/
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.3)
     scaler = torch.cuda.amp.GradScaler()

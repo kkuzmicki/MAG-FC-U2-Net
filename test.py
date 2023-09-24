@@ -41,7 +41,7 @@ def test_eval(args):
     result = pd.DataFrame(columns=['track', 'SDR', 'ISR', 'SIR', 'SAR'])
     reference_dir = Path(args.root, 'test')
     output_dir = Path(args.output_dir, Path(args.model).name, 'museval')
-    
+
     for track in tqdm.tqdm(tracks):
         input_file = str(Path(track, args.input)) # songs_name/mixture.wav
 
@@ -71,11 +71,11 @@ def test_eval(args):
 
             SDR, ISR, SIR, SAR = museval.evaluate(ref, est, win=sr, hop=sr)
             values = {
-                'track':estdir.name,
-                "SDR": median_nan(SDR[0]),
-                "ISR": median_nan(ISR[0]),
-                "SIR": median_nan(SIR[0]),
-                "SAR": median_nan(SAR[0])
+                'track': estdir.name,
+                "SDR":   median_nan(SDR[0]),
+                "ISR":   median_nan(ISR[0]),
+                "SIR":   median_nan(SIR[0]),
+                "SAR":   median_nan(SAR[0])
             }
             result.loc[result.shape[0]] = values
         # print(values)

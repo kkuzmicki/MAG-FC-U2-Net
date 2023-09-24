@@ -132,12 +132,12 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
                 track_path / source, start=start, dur=self.seq_duration
             )
 
-            audio = self.source_augmentations(audio)
+            audio = self.source_augmentations(audio) # data.py: torch.Size([2, 130560])
             audio_sources.append(audio)
 
-        stems = torch.stack(audio_sources)
+        stems = torch.stack(audio_sources) # torch.Size([4, 2, 130560])
         # # apply linear mix over source index=0
-        x = stems.sum(0) # all sources summed up
+        x = stems.sum(0) # all sources summed up  # orch.Size([2, 130560])
 
         # y = stems.reshape(-1, stems.size(2))
         y = stems[0] # vocal
