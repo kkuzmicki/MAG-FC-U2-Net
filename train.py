@@ -51,7 +51,7 @@ def train(args, model, device, train_loader, optimizer, scaler):
 
         X = utils.Spectrogram(utils.STFT(x, device, args.fft, args.hop)) # train.py: torch.Size([12, 2, 513, 128])
         Y = utils.Spectrogram(utils.STFT(y, device, args.fft, args.hop)) # train.py: torch.Size([12, 2, 513, 128])
-        X = X[:,:,:args.bins,:] # train.py: torch.Size([12, 2, 513, 128]) (arg.bins by default is 513)
+        X = X[:,:,:args.bins,:] # train.py: torch.Size([12, 2, 513, 128]) (arg.bins by default is 513) IF IN STFT RETURN_COMPLEX=FALSE, THEN torch.Size([12, 2, 513, 256])
         Y = Y[:,:,:args.bins,:] # train.py: torch.Size([12, 2, 513, 128])
         
         mask = torch.ones_like(Y).to(device) # Returns a tensor filled with the scalar value 1, with the same size as input # train.py: torch.Size([12, 2, 513, 128])
@@ -92,7 +92,7 @@ def get_parser():
 
     # Trainig Parameters
     parser.add_argument('--epochs', type=int, default=250)
-    parser.add_argument('--batch-size', type=int, default=12) # 12
+    parser.add_argument('--batch-size', type=int, default=12) # originally 12
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--patience', type=int, default=80)
     parser.add_argument('--weight-decay', type=float, default=0.00001)
@@ -105,7 +105,9 @@ def get_parser():
     parser.add_argument('--hop', type=int, default=512)
     parser.add_argument('--bins', type=int, default=None)
 
-    parser.add_argument('--nb-workers', type=int, default=12) # default=12
+    parser.add_argument('--nb-workers', type=int, default=6) # default=12; 6 or 12 doesn't make difference, 12< is getting worse and worse; 
+                                                             # https://stackoverflow.com/questions/53998282/how-does-the-number-of-workers-parameter-in-pytorch-dataloader-actually-work
+    
     parser.add_argument('--device', type=str, default="cuda")
 
     return parser
