@@ -158,9 +158,10 @@ def STFT(x, device, n_fft=4096, n_hop=1024): # n_fft = 1024; n_hop = 512
         x,
         n_fft=n_fft, hop_length=n_hop,
         window=torch.hann_window(n_fft, device=device),
-        center=True, normalized=False, onesided=True, pad_mode='constant', return_complex=True
+        center=True, normalized=False, onesided=True, pad_mode='constant', return_complex=False
     ) # train.py: torch.Size([24, 513, 256]) IF return_complex=False, then torch.Size([24, 513, 256, 2])| test.py: torch.Size([2, 513, 256])
-    x = x.contiguous().view(nb_samples, nb_channels, n_fft // 2 + 1, -1, 2) # train.py: torch.Size([12, 2, 513, 128, 2]) IF return_complex=False THEN torch.Size([12, 2, 513, 256, 2])
+    x = x.contiguous().view(nb_samples, nb_channels, n_fft // 2 + 1, -1, 2) # train.py: torch.Size([12, 2, 513, 128, 2]) IF return_complex=False THEN torch.Size([12, 2, 513, 256, 2]) # LEGACY
+    #x = x.contiguous().view(nb_samples, nb_channels, n_fft // 2 + 1, -1) # train.py: torch.Size([12, 2, 513, 256])
 
     return x
 
@@ -170,7 +171,8 @@ def ComplexFFT(x):
     return x
 
 def Spectrogram(x):
-    x = torch.norm(x, dim=-1) # train.py: orch.Size([12, 2, 513, 128]) IF return_complex=False THEN torch.Size([12, 2, 513, 256])
+    x = torch.norm(x, dim=-1) # train.py: orch.Size([12, 2, 513, 128]) IF return_complex=False THEN torch.Size([12, 2, 513, 256]) # LEGACY
+    #x = torch.norm(x, dim=0) # 
 
     return x
     # return torch.log10(x + 1)

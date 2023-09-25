@@ -80,10 +80,10 @@ def get_parser():
     parser.add_argument('--local_rank', type=int, default=0)
     parser.add_argument('--nprocs', type=int)
     parser.add_argument('--root', type=str, default='DATASET_16kHz_2channels')
-    # parser.add_argument('--root', type=str, default='../dataset/musdb44')
+
     parser.add_argument('--model', type=str, default="models/musdb16_model_first")
-    parser.add_argument('--pretrained', dest='pretrained', action='store_true') # originally uncommented
-    #parser.add_argument('--pretrained', type=bool, default='true') # originally commented
+    parser.add_argument('--pretrained', dest='pretrained', action='store_true') # creates new model
+    #parser.add_argument('--pretrained', type=bool, default='true') # uses saved model
     parser.add_argument('--target', type=str, default='vocals')
 
     parser.add_argument('--sample-rate', type=int, default=16000)
@@ -201,6 +201,8 @@ def main():
 
             with open(Path(args.model, args.target + '.json'), 'w') as outfile:
                 outfile.write(json.dumps(params, indent=4, sort_keys=True))
+
+            # TODO <save loses to file>
 
         if stop:
             print("Apply Early Stopping")

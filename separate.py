@@ -62,12 +62,13 @@ def transform(audio, model, fft, hop, device): # audio >>> torch.Size([2, 130560
         mag_target = mag_target.cpu().detach()
 
         mag_target = mag_target.reshape(-1, mag_target.shape[-2], mag_target.shape[-1]) # after: torch.Size([2, 513, 128])
-        X = torch.stft(audio, fft, hop, window=torch.hann_window(fft), return_complex=False) # after: torch.Size([2, 513, 256])
+        X = torch.stft(audio, fft, hop, window=torch.hann_window(fft), return_complex=True) # after: torch.Size([2, 513, 256])
         #magnitude, phase = ex.magphase(X) # https://pytorch.org/audio/0.9.0/_modules/torchaudio/functional/functional.html#magphase
-        X = torch.view_as_complex(X)
+        #X = torch.view_as_complex(X)
         magnitude = torch.abs(X) # torch.Size([2, 513, 256])
         phase = torch.angle(X) # torch.Size([2, 513, 256])
         complex = torch.stack((mag_target * torch.cos(phase), mag_target * torch.sin(phase)), -1)
+        complex = torch.view_as_complex(complex) # prototype
         audio_hat = torch.istft(complex, fft, hop, fft, torch.hann_window(fft)).numpy() # https://pytorch.org/docs/stable/generated/torch.istft.html
 
     return audio_hat

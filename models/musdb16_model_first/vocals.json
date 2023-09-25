@@ -11,7 +11,7 @@
         "local_rank": 0,
         "lr": 0.001,
         "model": "models/musdb16_model_first",
-        "nb_workers": 12,
+        "nb_workers": 6,
         "nprocs": null,
         "patience": 80,
         "pretrained": false,
@@ -23,10 +23,10 @@
         "weight_decay": 1e-05
     },
     "best_epoch": 1,
-    "best_loss": 0.6274803085185641,
+    "best_loss": 0.6318412775294386,
     "epochs_trained": 1,
     "num_bad_epochs": 0,
     "train_loss_history": [
-        0.6274803085185641
+        0.6318412775294386
     ]
 }
