@@ -10,11 +10,15 @@ musdb18_16kHz/
 musdb18_ORG/
 musdb18_ORG_separated/
 DATASET_16kHz_2channels/
+models/
 
 
 # audio formats
 *.mp4
 *.wav
+
+model formats
+*.pth
 
 # other
 *.pyc

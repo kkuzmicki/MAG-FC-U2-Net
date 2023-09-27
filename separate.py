@@ -31,7 +31,7 @@ def load_model(target, model_name='umxhq', device=torch.device("cpu")):
         with open(Path(model_path, target + '.json'), 'r') as stream: # opens vocals.json
             results = json.load(stream) # saves file stream as python object
 
-        target_model_path = next(Path(model_path).glob("%s.pth" % target)) # pth file stores weights of model and structure
+        target_model_path = next(Path(model_path).glob("%s250.pth" % target)) # pth file stores weights of model and structure
         # print(target_model_path)
         state = torch.load(target_model_path, map_location=device)
 
