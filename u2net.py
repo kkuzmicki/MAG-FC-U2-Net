@@ -2,6 +2,17 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+# despite of seed usage, program isn't deterministic:
+# proof: https://discuss.pytorch.org/t/random-seed-with-external-gpu/102260
+# ---------------
+# RuntimeError: Deterministic behavior was enabled with either 
+# `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, 
+# but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. 
+# To enable deterministic behavior in this case, 
+# you must set an environment variable before running your PyTorch application: 
+# CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, 
+# go to https://docs.nvidia.com/cuda/cublas/index.html#cublasApi_reproducibility
+
 class REBNCONV(nn.Module):
     def __init__(self,in_ch=3,out_ch=3,dirate=1):
         super(REBNCONV,self).__init__()
@@ -153,6 +164,7 @@ class RSU6(nn.Module):#UNet06DRES(nn.Module):
         self.rebnconv2d = REBNCONV(mid_ch*2,mid_ch,dirate=1)
         self.rebnconv1d = REBNCONV(mid_ch*2,out_ch,dirate=1)
         self.fc = FC(out_ch,bins)
+
     def forward(self,x):
 
         hx = x
@@ -353,16 +365,16 @@ class u2net(nn.Module):
         self.stage2 = RSU6(64,16,64,bins//2)
         self.pool23 = nn.AvgPool2d(2,stride=2)
 
-        self.stage3 = RSU5(64,16,64,bins//4)
+        self.stage3 = RSU5(64,16,64,bins//4) # originally RSU5(64,16,64,bins//4)
         self.pool34 = nn.AvgPool2d(2,stride=2)
 
-        self.stage4 = RSU4(64,16,64,bins//8)
+        self.stage4 = RSU4(64,16,64,bins//8) # originally RSU4(64,16,64,bins//8)
         self.pool45 = nn.AvgPool2d(2,stride=2)
 
-        self.stage5 = RSU4F(64,16,64,bins//16)
+        self.stage5 = RSU4F(64,16,64,bins//16) # originally RSU4F(64,16,64,bins//16)
         self.pool56 = nn.AvgPool2d(2,stride=2)
 
-        self.stage6 = RSU4F(64,16,64,bins//32)
+        self.stage6 = RSU4F(64,16,64,bins//32) # originally RSU4F(64,16,64,bins//32)
 
         # decoder
         self.stage5d = RSU4F(128,16,64,bins//16)
@@ -371,10 +383,12 @@ class u2net(nn.Module):
         self.stage2d = RSU6(128,16,64,bins//2)
         self.stage1d = RSU7(128,16,64,bins)
 
-        self.side1 = nn.Conv2d(64,out_ch,3,padding=1,bias = False)
+        self.side1 = nn.Conv2d(64,out_ch,3,padding=1,bias = False) # 64 originally
         self.side2 = nn.Conv2d(64,out_ch,3,padding=1,bias = False)
 
-
+    # hx - not used directly in output, after assignment to hx6 it is not used anymore
+    # hx<1-...> - outputs from encoders
+    # hx<1-...>d - 
     def forward(self,x):
 
         mix = x # test.py: orch.Size([1, 2, 513, 128])
@@ -384,24 +398,24 @@ class u2net(nn.Module):
         hx = x # torch.Size([1, 2, 128, 513])
 
         #stage 1
-        hx1 = self.stage1(hx)
-        hx = self.pool12(hx1)
+        hx1 = self.stage1(hx) # RSU7(in_ch,16,64,bins)
+        hx = self.pool12(hx1) # nn.AvgPool2d(2,stride=2)
 
         #stage 2
-        hx2 = self.stage2(hx)
-        hx = self.pool23(hx2)
+        hx2 = self.stage2(hx) # RSU6(64,16,64,bins//2)
+        hx = self.pool23(hx2) # nn.AvgPool2d(2,stride=2)
 
         #stage 3
-        hx3 = self.stage3(hx)
-        hx = self.pool34(hx3)
+        hx3 = self.stage3(hx) # RSU5(64,16,64,bins//4)
+        hx = self.pool34(hx3) # nn.AvgPool2d(2,stride=2)
 
         #stage 4
-        hx4 = self.stage4(hx)
-        hx = self.pool45(hx4)
+        hx4 = self.stage4(hx) # RSU4(64,16,64,bins//8)
+        hx = self.pool45(hx4) # nn.AvgPool2d(2,stride=2)
 
         #stage 5
-        hx5 = self.stage5(hx)
-        hx = self.pool56(hx5)
+        hx5 = self.stage5(hx) # RSU4F(64,16,64,bins//16)
+        hx = self.pool56(hx5) # nn.AvgPool2d(2,stride=2)
 
         #stage 6
         hx6 = self.stage6(hx)
@@ -421,7 +435,6 @@ class u2net(nn.Module):
         hx2dup = _upsample_like(hx2d,hx1)
 
         hx1d = self.stage1d(torch.cat((hx2dup,hx1),1))
-
 
         #side output
         d1 = self.side1(hx1d)

@@ -81,7 +81,7 @@ def get_parser():
     parser.add_argument('--nprocs', type=int)
     parser.add_argument('--root', type=str, default='DATASET_16kHz_2channels')
 
-    parser.add_argument('--model', type=str, default="models/musdb16_model_first")
+    parser.add_argument('--model', type=str, default="models/musdb16_model_first_v4")
     parser.add_argument('--pretrained', dest='pretrained', action='store_true') # creates new model
     #parser.add_argument('--pretrained', type=bool, default='true') # uses saved model
     parser.add_argument('--target', type=str, default='vocals')
@@ -114,6 +114,9 @@ def get_parser():
 
 def main():
 
+    #TEST
+    torch.use_deterministic_algorithms(True)
+
     parser = get_parser()
     args = parser.parse_args()
     
@@ -124,13 +127,13 @@ def main():
 
     model_path = Path(args.model)
     model_path.mkdir(parents=True, exist_ok=True)
-    random.seed(args.seed)
-    torch.manual_seed(args.seed)
+    random.seed(args.seed) # sets seed for Python's random
+    torch.manual_seed(args.seed) # sets seed for torch's random (both CPU and CUDA)
 
     train_dataset = data.load_datasets(args)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
         num_workers=args.nb_workers, pin_memory=False
-    )
+    ) # this shuffle works with torch's random - seed
 
     model = u2net(2,2,args.bins).to(device)
     # model = myModel(args).to(device)
