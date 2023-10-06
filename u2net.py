@@ -17,15 +17,16 @@ class REBNCONV(nn.Module):
     def __init__(self,in_ch=3,out_ch=3,dirate=1):
         super(REBNCONV,self).__init__()
 
-        self.conv = nn.Conv2d(in_ch,out_ch,3,padding=1*dirate,dilation=1*dirate)
+        # https://github.com/vdumoulin/conv_arithmetic/blob/master/README.md
+        self.conv = nn.Conv2d(in_ch,out_ch,3,padding=1*dirate,dilation=1*dirate) # https://www.youtube.com/watch?v=yb2tPt0QVPY
         self.bn = nn.BatchNorm2d(out_ch)
         self.relu = nn.ReLU(inplace=True)
 
-    def forward(self,x):
-
+    def forward(self,x): # train.py (RSU7): torch.Size([12, 2, 256, 513])
+        test = self.conv(x) # train.py (RSU7): torch.Size([12, 64, 256, 513]) - probably works on 3 last dimensions
         x = self.relu(self.bn(self.conv(x)))
 
-        return x
+        return x # train.py: torch.Size([12, 64, 256, 513])
 
 def _upsample_like(src,tar):
 
@@ -50,8 +51,6 @@ class FC(nn.Module):
 
     def forward(self, x):
         return self.fc(x)
-
-
 
 ### RSU-7 ###
 class RSU7(nn.Module):#UNet07DRES(nn.Module):
@@ -92,45 +91,45 @@ class RSU7(nn.Module):#UNet07DRES(nn.Module):
     def forward(self,x):
 
         hx = x
-        hxin = self.rebnconvin(hx)
+        hxin = self.rebnconvin(hx) # REBNCONV IN=2 OUT=64
 
-        hx1 = self.rebnconv1(hxin)
-        hx = self.pool1(hx1)
+        hx1 = self.rebnconv1(hxin) # REBNCONV IN=64 OUT=16
+        hx = self.pool1(hx1) # nn.AvgPool2d(2,stride=2,ceil_mode=True)
 
-        hx2 = self.rebnconv2(hx)
-        hx = self.pool2(hx2)
+        hx2 = self.rebnconv2(hx) # REBNCONV IN=16 OUT=16
+        hx = self.pool2(hx2) # nn.AvgPool2d(2,stride=2,ceil_mode=True)
 
-        hx3 = self.rebnconv3(hx)
-        hx = self.pool3(hx3)
+        hx3 = self.rebnconv3(hx) # REBNCONV IN=16 OUT=16
+        hx = self.pool3(hx3) # nn.AvgPool2d(2,stride=2,ceil_mode=True)
 
-        hx4 = self.rebnconv4(hx)
-        hx = self.pool4(hx4)
+        hx4 = self.rebnconv4(hx) # REBNCONV IN=16 OUT=16
+        hx = self.pool4(hx4) # nn.AvgPool2d(2,stride=2,ceil_mode=True)
 
-        hx5 = self.rebnconv5(hx)
-        hx = self.pool5(hx5)
+        hx5 = self.rebnconv5(hx) # REBNCONV IN=16 OUT=16
+        hx = self.pool5(hx5) # nn.AvgPool2d(2,stride=2,ceil_mode=True)
 
-        hx6 = self.rebnconv6(hx)
+        hx6 = self.rebnconv6(hx) # REBNCONV IN=16 OUT=16
 
-        hx7 = self.rebnconv7(hx6)
+        hx7 = self.rebnconv7(hx6) # REBNCONV IN=16 OUT=16
 
-        hx6d =  self.rebnconv6d(torch.cat((hx7,hx6),1))
+        hx6d =  self.rebnconv6d(torch.cat((hx7,hx6),1)) # REBNCONV IN=32 OUT=16
         hx6dup = _upsample_like(hx6d,hx5)
 
-        hx5d =  self.rebnconv5d(torch.cat((hx6dup,hx5),1))
+        hx5d =  self.rebnconv5d(torch.cat((hx6dup,hx5),1)) # REBNCONV IN=32 OUT=16
         hx5dup = _upsample_like(hx5d,hx4)
 
-        hx4d = self.rebnconv4d(torch.cat((hx5dup,hx4),1))
+        hx4d = self.rebnconv4d(torch.cat((hx5dup,hx4),1)) # REBNCONV IN=32 OUT=16
         hx4dup = _upsample_like(hx4d,hx3)
 
-        hx3d = self.rebnconv3d(torch.cat((hx4dup,hx3),1))
+        hx3d = self.rebnconv3d(torch.cat((hx4dup,hx3),1)) # REBNCONV IN=32 OUT=16
         hx3dup = _upsample_like(hx3d,hx2)
 
-        hx2d = self.rebnconv2d(torch.cat((hx3dup,hx2),1))
+        hx2d = self.rebnconv2d(torch.cat((hx3dup,hx2),1)) # REBNCONV IN=32 OUT=16
         hx2dup = _upsample_like(hx2d,hx1)
 
-        hx1d = self.rebnconv1d(torch.cat((hx2dup,hx1),1))
+        hx1d = self.rebnconv1d(torch.cat((hx2dup,hx1),1)) # REBNCONV IN=32 OUT=64
 
-        hx1d = self.fc(hx1d)
+        hx1d = self.fc(hx1d) # FC CHANNELS=64 BINS=64
 
         return hx1d + hxin
 
@@ -232,6 +231,7 @@ class RSU5(nn.Module):#UNet05DRES(nn.Module):
         self.rebnconv2d = REBNCONV(mid_ch*2,mid_ch,dirate=1)
         self.rebnconv1d = REBNCONV(mid_ch*2,out_ch,dirate=1)
         self.fc = FC(out_ch,bins)
+        
     def forward(self,x):
 
         hx = x
@@ -288,6 +288,7 @@ class RSU4(nn.Module):#UNet04DRES(nn.Module):
         self.rebnconv2d = REBNCONV(mid_ch*2,mid_ch,dirate=1)
         self.rebnconv1d = REBNCONV(mid_ch*2,out_ch,dirate=1)
         self.fc = FC(out_ch,bins)
+
     def forward(self,x):
 
         hx = x
@@ -352,7 +353,6 @@ class RSU4F(nn.Module):#UNet04FRES(nn.Module):
 
         return hx1d + hxin
 
-
 ### U^2-Net small ###
 class u2net(nn.Module):
 
@@ -384,33 +384,33 @@ class u2net(nn.Module):
         self.stage1d = RSU7(128,16,64,bins)
 
         self.side1 = nn.Conv2d(64,out_ch,3,padding=1,bias = False) # 64 originally
-        self.side2 = nn.Conv2d(64,out_ch,3,padding=1,bias = False)
+        self.side2 = nn.Conv2d(64,out_ch,3,padding=1,bias = False) # 64 originally
 
     # hx - not used directly in output, after assignment to hx6 it is not used anymore
     # hx<1-...> - outputs from encoders
     # hx<1-...>d - 
     def forward(self,x):
 
-        mix = x # test.py: orch.Size([1, 2, 513, 128])
+        mix = x # train.py: torch.Size([10, 2, 513, 256]) | test.py: orch.Size([1, 2, 513, 256])
 
-        x = x.permute(0, 1, 3, 2) # changes order
+        x = x.permute(0, 1, 3, 2) # changes order # train.py: torch.Size([10, 2, 256, 513]) | test.py: torch.Size([1, 2, 256, 513])
 
-        hx = x # torch.Size([1, 2, 128, 513])
+        hx = x
 
         #stage 1
-        hx1 = self.stage1(hx) # RSU7(in_ch,16,64,bins)
+        hx1 = self.stage1(hx) # RSU7(in_ch=2,16,64,bins)
         hx = self.pool12(hx1) # nn.AvgPool2d(2,stride=2)
 
         #stage 2
-        hx2 = self.stage2(hx) # RSU6(64,16,64,bins//2)
+        hx2 = self.stage2(hx) #   RSU6(64,16,64,bins//2)
         hx = self.pool23(hx2) # nn.AvgPool2d(2,stride=2)
 
         #stage 3
-        hx3 = self.stage3(hx) # RSU5(64,16,64,bins//4)
+        hx3 = self.stage3(hx) #   RSU5(64,16,64,bins//4)
         hx = self.pool34(hx3) # nn.AvgPool2d(2,stride=2)
 
         #stage 4
-        hx4 = self.stage4(hx) # RSU4(64,16,64,bins//8)
+        hx4 = self.stage4(hx) #   RSU4(64,16,64,bins//8)
         hx = self.pool45(hx4) # nn.AvgPool2d(2,stride=2)
 
         #stage 5
@@ -442,8 +442,6 @@ class u2net(nn.Module):
         d2 = self.side2(hx1d)
         d2 = d2.permute(0, 1, 3, 2)
         return mix*F.relu(d1), d2
-
-
 
 if __name__ == "__main__":
 

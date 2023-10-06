@@ -163,7 +163,9 @@ def STFT(x, device, n_fft=4096, n_hop=1024): # n_fft = 1024; n_hop = 512
     x = x.contiguous().view(nb_samples, nb_channels, n_fft // 2 + 1, -1, 2) # train.py: torch.Size([12, 2, 513, 128, 2]) IF return_complex=False THEN torch.Size([12, 2, 513, 256, 2]) # LEGACY
     #x = x.contiguous().view(nb_samples, nb_channels, n_fft // 2 + 1, -1) # train.py: torch.Size([12, 2, 513, 256])
 
-    return x
+    return x 
+    # train.py: torch.Size([12 <<< audio fragmens/songs, 2 <<< channels, 513 <<< frequencies (rows in spectrogram), 
+    # 256 <<< timestamps (columns in spectrogram), 2 <<< real and imaginary number])
 
 def ComplexFFT(x):
     x = x.permute(0, 1, 4, 2, 3)

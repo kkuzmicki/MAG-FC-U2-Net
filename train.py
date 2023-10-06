@@ -26,7 +26,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 tqdm.monitor_interval = 0
-torch.backends.cudnn.benchmark = True
+torch.backends.cudnn.benchmark = True # https://discuss.pytorch.org/t/what-does-torch-backends-cudnn-benchmark-do/5936
 
 # 1. Change mode to 'train'
 # 2. Get 8,12seconds fragmets from song in waveform format
@@ -49,13 +49,13 @@ def train(args, model, device, train_loader, optimizer, scaler):
 
         x, y = x.to(device), y.to(device) # train.py: x >>> torch.Size([12, 2, 130560]) y >>> torch.Size([12, 2, 130560])
 
-        X = utils.Spectrogram(utils.STFT(x, device, args.fft, args.hop)) # train.py: torch.Size([12, 2, 513, 128])
-        Y = utils.Spectrogram(utils.STFT(y, device, args.fft, args.hop)) # train.py: torch.Size([12, 2, 513, 128])
-        X = X[:,:,:args.bins,:] # train.py: torch.Size([12, 2, 513, 128]) (arg.bins by default is 513) IF IN STFT RETURN_COMPLEX=FALSE, THEN torch.Size([12, 2, 513, 256])
-        Y = Y[:,:,:args.bins,:] # train.py: torch.Size([12, 2, 513, 128])
+        X = utils.Spectrogram(utils.STFT(x, device, args.fft, args.hop)) # train.py: torch.Size([12, 2, 513, 256])
+        Y = utils.Spectrogram(utils.STFT(y, device, args.fft, args.hop)) # train.py: torch.Size([12, 2, 513, 256])
+        X = X[:,:,:args.bins,:] # train.py: torch.Size([12, 2, 513, 256]) (arg.bins by default is 513) IF IN STFT RETURN_COMPLEX=FALSE, THEN torch.Size([12, 2, 513, 256])
+        Y = Y[:,:,:args.bins,:] # train.py: torch.Size([12, 2, 513, 256])
         
         mask = torch.ones_like(Y).to(device) # Returns a tensor filled with the scalar value 1, with the same size as input # train.py: torch.Size([12, 2, 513, 128])
-        mask[Y*10/5<X] = 0.0 # torch.Size([12, 2, 513, 128])
+        mask[Y*10/5<X] = 0.0 # torch.Size([12, 2, 513, 256])
         optimizer.zero_grad() # Sets the gradients of all optimized torch. Tensor s to zero.
 
         # print(X.shape)
@@ -74,7 +74,6 @@ def train(args, model, device, train_loader, optimizer, scaler):
         # break
     return np.array(losses).mean()
 
-
 def get_parser():
     parser = argparse.ArgumentParser(description='Music Separation Training')
     parser.add_argument('--local_rank', type=int, default=0)
@@ -90,11 +89,11 @@ def get_parser():
     parser.add_argument('--channels', type=int, default=2)
     parser.add_argument('--samples-per-track', type=int, default=100)
 
-    # Trainig Parameters
+    # Training Parameters
     parser.add_argument('--epochs', type=int, default=250)
     parser.add_argument('--batch-size', type=int, default=12) # originally 12
     parser.add_argument('--lr', type=float, default=0.001)
-    parser.add_argument('--patience', type=int, default=80)
+    parser.add_argument('--patience', type=int, default=30) # originally 80
     parser.add_argument('--weight-decay', type=float, default=0.00001)
     parser.add_argument('--seed', type=int, default=42, metavar='S')
 
@@ -114,8 +113,7 @@ def get_parser():
 
 def main():
 
-    #TEST
-    torch.use_deterministic_algorithms(True)
+    # torch.use_deterministic_algorithms(True) # uncomment if want to start deterministic mode
 
     parser = get_parser()
     args = parser.parse_args()
@@ -165,7 +163,6 @@ def main():
         train_losses = []
         best_epoch = 0
 
-
     pbar = tqdm.tqdm(epochs)
     for epoch in pbar:
 
@@ -205,13 +202,10 @@ def main():
             with open(Path(args.model, args.target + '.json'), 'w') as outfile:
                 outfile.write(json.dumps(params, indent=4, sort_keys=True))
 
-            # TODO <save loses to file>
-
         if stop:
             print("Apply Early Stopping")
 
             break
-
 
 if __name__ == "__main__":
     main()

@@ -3,4 +3,9 @@
 513 - liczba częstotliwości (wykładniczo), czyli liczba wierszy w spektrogramie
 256 - liczba kolumn w spektrogramie
 
-może jest ,2 bo hop skacze o połowę, tj. hop jest 512, a długość 1024
+hop jest 512, a długość 1024
+
+kernel = filter = feature detector <<< https://stats.stackexchange.com/questions/154798/difference-between-kernel-and-filter-in-cnn
+
+
+dobre o CNN: https://indoml.com/2018/03/07/student-notes-convolutional-neural-networks-cnn-introduction/
