@@ -158,6 +158,16 @@ def eval_main(args):
                 "ISR": median_nan(ISR[0]),
                 "SIR": median_nan(SIR[0]),
                 "SAR": median_nan(SAR[0])
+                # 'track':
+                # 'Al James - Schoolboy Facination'
+                # 'SDR':
+                # 0.947722507761062
+                # 'ISR':
+                # 1.175806659857812
+                # 'SIR':
+                # inf
+                # 'SAR':
+                # -0.5105894979942309
             }
             result.loc[result.shape[0]] = values
             # print(values)
@@ -192,4 +202,5 @@ if __name__ == '__main__':
 
     args, _ = parser.parse_known_args()
 
-    test_eval(args)
+    # test_eval(args)
+    eval_main(args)

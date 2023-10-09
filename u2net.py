@@ -366,29 +366,29 @@ class u2net(nn.Module):
         self.stage1 = RSU7(in_ch,16,64,bins)
         self.pool12 = nn.AvgPool2d(2,stride=2)
 
-        self.stage2 = RSU6(64,16,64,bins//2)
+        self.stage2 = RSU6(64,16,128,bins//2)
         self.pool23 = nn.AvgPool2d(2,stride=2)
 
-        self.stage3 = RSU5(64,16,64,bins//4) # originally RSU5(64,16,64,bins//4)
+        self.stage3 = RSU5(128,16,128,bins//4) # originally RSU5(64,16,64,bins//4)
         self.pool34 = nn.AvgPool2d(2,stride=2)
 
-        self.stage4 = RSU4(64,16,64,bins//8) # originally RSU4(64,16,64,bins//8)
+        self.stage4 = RSU4(128,16,128,bins//8) # originally RSU4(64,16,64,bins//8)
         self.pool45 = nn.AvgPool2d(2,stride=2)
 
-        self.stage5 = RSU4F(64,16,64,bins//16) # originally RSU4F(64,16,64,bins//16)
+        self.stage5 = RSU4F(128,16,128,bins//16) # originally RSU4F(64,16,64,bins//16)
         self.pool56 = nn.AvgPool2d(2,stride=2)
 
-        self.stage6 = RSU4F(64,16,64,bins//32) # originally RSU4F(64,16,64,bins//32)
+        self.stage6 = RSU4F(128,16,128,bins//32) # originally RSU4F(64,16,64,bins//32)
 
         # decoder
-        self.stage5d = RSU4F(128,16,64,bins//16)
-        self.stage4d = RSU4(128,16,64,bins//8)
-        self.stage3d = RSU5(128,16,64,bins//4)
-        self.stage2d = RSU6(128,16,64,bins//2)
-        self.stage1d = RSU7(128,16,64,bins)
+        self.stage5d = RSU4F(256,16,128,bins//16)
+        self.stage4d = RSU4(256,16,128,bins//8)
+        self.stage3d = RSU5(256,16,128,bins//4)
+        self.stage2d = RSU6(256,16,64,bins//2)
+        self.stage1d = RSU7(128,16,128,bins)
 
-        self.side1 = nn.Conv2d(64,out_ch,3,padding=1,bias = False) # 64 originally
-        self.side2 = nn.Conv2d(64,out_ch,3,padding=1,bias = False) # 64 originally
+        self.side1 = nn.Conv2d(128,out_ch,3,padding=1,bias = False) # 64 originally
+        self.side2 = nn.Conv2d(128,out_ch,3,padding=1,bias = False) # 64 originally
 
     # hx - not used directly in output, after assignment to hx6 it is not used anymore
     # hx<1-...> - outputs from encoders

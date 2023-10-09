@@ -102,9 +102,9 @@ def get_parser():
 
     parser.add_argument('--fft', type=int, default=1024)
     parser.add_argument('--hop', type=int, default=512)
-    parser.add_argument('--bins', type=int, default=None)
+    parser.add_argument('--bins', type=int, default=None) 
 
-    parser.add_argument('--nb-workers', type=int, default=6) # default=12; 6 or 12 doesn't make difference, 12< is getting worse and worse; 
+    parser.add_argument('--nb-workers', type=int, default=12) # default=12; 6 or 12 doesn't make difference, 12< is getting worse and worse; 
                                                              # https://stackoverflow.com/questions/53998282/how-does-the-number-of-workers-parameter-in-pytorch-dataloader-actually-work
     
     parser.add_argument('--device', type=str, default="cuda")
@@ -113,7 +113,7 @@ def get_parser():
 
 def main():
 
-    # torch.use_deterministic_algorithms(True) # uncomment if want to start deterministic mode
+    # torch.use_deterministic_algorithms(True) # uncomment to turn deterministic mode on
 
     parser = get_parser()
     args = parser.parse_args()
