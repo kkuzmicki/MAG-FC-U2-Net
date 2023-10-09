@@ -426,7 +426,7 @@ class u2net(nn.Module):
         hx6up = _upsample_like(hx6,hx5) # train.py: torch.Size([12, 64, 16, 32])
 
         #decoder
-        test = torch.cat((hx6up, hx5), 1) # torch.Size([12, 128, 16, 32])
+        #test = torch.cat((hx6up, hx5), 1) # torch.Size([12, 128, 16, 32])
         hx5d = self.stage5d(torch.cat((hx6up,hx5),1)) # train.py: torch.Size([12, 64, 16, 32])
         hx5dup = _upsample_like(hx5d,hx4) # train.py: torch.Size([12, 64, 32, 64])
 
