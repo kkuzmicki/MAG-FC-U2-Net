@@ -17,7 +17,7 @@ class REBNCONV(nn.Module):
     def __init__(self,in_ch=3,out_ch=3,dirate=1):
         super(REBNCONV,self).__init__()
 
-        # https://github.com/vdumoulin/conv_arithmetic/blob/master/README.md
+        # conv animations: https://github.com/vdumoulin/conv_arithmetic/blob/master/README.md
         self.conv = nn.Conv2d(in_ch,out_ch,3,padding=1*dirate,dilation=1*dirate) # https://www.youtube.com/watch?v=yb2tPt0QVPY
         self.bn = nn.BatchNorm2d(out_ch)
         self.relu = nn.ReLU(inplace=True)
@@ -42,7 +42,9 @@ class FC(nn.Module):
 
         self.fc = nn.Sequential(
             nn.Linear(bins, bn_unis, True),
-            nn.BatchNorm2d(channel),
+            nn.BatchNorm2d(channel), # Batch normalization makes sure 
+            # that the values of hidden units have standardized mean and variance
+            # https://androidkt.com/use-the-batchnorm-layer-in-pytorch/
             nn.ReLU(inplace=True),
             nn.Linear(bn_unis, bins, True),
             nn.BatchNorm2d(channel),
@@ -94,26 +96,28 @@ class RSU7(nn.Module):#UNet07DRES(nn.Module):
         hxin = self.rebnconvin(hx) # REBNCONV IN=2 OUT=64
 
         hx1 = self.rebnconv1(hxin) # REBNCONV IN=64 OUT=16
-        hx = self.pool1(hx1) # nn.AvgPool2d(2,stride=2,ceil_mode=True)
+        hx = self.pool1(hx1) # nn.AvgPool2d(2,stride=2,ceil_mode=True) # every avgpool divide last 2 dimension by 2 # train.py: torch.Size([12, 16, 128, 257])
 
         hx2 = self.rebnconv2(hx) # REBNCONV IN=16 OUT=16
-        hx = self.pool2(hx2) # nn.AvgPool2d(2,stride=2,ceil_mode=True)
+        hx = self.pool2(hx2) # nn.AvgPool2d(2,stride=2,ceil_mode=True) # train.py: torch.Size([12, 16, 64, 129])
 
         hx3 = self.rebnconv3(hx) # REBNCONV IN=16 OUT=16
-        hx = self.pool3(hx3) # nn.AvgPool2d(2,stride=2,ceil_mode=True)
+        hx = self.pool3(hx3) # nn.AvgPool2d(2,stride=2,ceil_mode=True) # train.py: torch.Size([12, 16, 32, 65])
 
         hx4 = self.rebnconv4(hx) # REBNCONV IN=16 OUT=16
-        hx = self.pool4(hx4) # nn.AvgPool2d(2,stride=2,ceil_mode=True)
+        hx = self.pool4(hx4) # nn.AvgPool2d(2,stride=2,ceil_mode=True) # train.py: torch.Size([12, 16, 16, 33])
 
         hx5 = self.rebnconv5(hx) # REBNCONV IN=16 OUT=16
-        hx = self.pool5(hx5) # nn.AvgPool2d(2,stride=2,ceil_mode=True)
+        hx = self.pool5(hx5) # nn.AvgPool2d(2,stride=2,ceil_mode=True) # train.py: torch.Size([12, 16, 8, 17])
 
-        hx6 = self.rebnconv6(hx) # REBNCONV IN=16 OUT=16
+        hx6 = self.rebnconv6(hx) # REBNCONV IN=16 OUT=16 # hx6 and hx7 have the same size because of no pooling
 
         hx7 = self.rebnconv7(hx6) # REBNCONV IN=16 OUT=16
 
-        hx6d =  self.rebnconv6d(torch.cat((hx7,hx6),1)) # REBNCONV IN=32 OUT=16
-        hx6dup = _upsample_like(hx6d,hx5)
+        # train.py: hx7: torch.Size([12, 16, 8, 17]) hx6: torch.Size([12, 16, 8, 17])
+        #test = torch.cat((hx7,hx6),1) # train.py: torch.Size([12, 32, 8, 17])
+        hx6d =  self.rebnconv6d(torch.cat((hx7,hx6),1)) # REBNCONV IN=32 OUT=16 # train.py: torch.Size([12, 16, 8, 17])
+        hx6dup = _upsample_like(hx6d,hx5) # train.py: torch.Size([12, 16, 16, 33])
 
         hx5d =  self.rebnconv5d(torch.cat((hx6dup,hx5),1)) # REBNCONV IN=32 OUT=16
         hx5dup = _upsample_like(hx5d,hx4)
@@ -129,9 +133,9 @@ class RSU7(nn.Module):#UNet07DRES(nn.Module):
 
         hx1d = self.rebnconv1d(torch.cat((hx2dup,hx1),1)) # REBNCONV IN=32 OUT=64
 
-        hx1d = self.fc(hx1d) # FC CHANNELS=64 BINS=64
+        hx1d = self.fc(hx1d) # FC CHANNELS=64 BINS=64 # Part III from article
 
-        return hx1d + hxin
+        return hx1d + hxin # Part I from article
 
 ### RSU-6 ###
 class RSU6(nn.Module):#UNet06DRES(nn.Module):
@@ -391,56 +395,57 @@ class u2net(nn.Module):
     # hx<1-...>d - 
     def forward(self,x):
 
-        mix = x # train.py: torch.Size([10, 2, 513, 256]) | test.py: orch.Size([1, 2, 513, 256])
+        mix = x # train.py: torch.Size([12, 2, 513, 256]) | test.py: orch.Size([1, 2, 513, 256])
 
-        x = x.permute(0, 1, 3, 2) # changes order # train.py: torch.Size([10, 2, 256, 513]) | test.py: torch.Size([1, 2, 256, 513])
+        x = x.permute(0, 1, 3, 2) # changes order # train.py: torch.Size([12, 2, 256, 513]) | test.py: torch.Size([1, 2, 256, 513])
 
-        hx = x
+        hx = x # train.py: torch.Size([12, 2, 256, 513])
 
         #stage 1
-        hx1 = self.stage1(hx) # RSU7(in_ch=2,16,64,bins)
-        hx = self.pool12(hx1) # nn.AvgPool2d(2,stride=2)
+        hx1 = self.stage1(hx) # RSU7(in_ch=2,16,64,bins) # train.py: torch.Size([12, 64, 256, 513])
+        hx = self.pool12(hx1) # nn.AvgPool2d(2,stride=2) # train.py: torch.Size([12, 64, 128, 256])
 
         #stage 2
-        hx2 = self.stage2(hx) #   RSU6(64,16,64,bins//2)
-        hx = self.pool23(hx2) # nn.AvgPool2d(2,stride=2)
+        hx2 = self.stage2(hx) #   RSU6(64,16,64,bins//2) # train.py: torch.Size([12, 64, 128, 256])
+        hx = self.pool23(hx2) # nn.AvgPool2d(2,stride=2) # train.py: torch.Size([12, 64, 64, 128])
 
         #stage 3
-        hx3 = self.stage3(hx) #   RSU5(64,16,64,bins//4)
-        hx = self.pool34(hx3) # nn.AvgPool2d(2,stride=2)
+        hx3 = self.stage3(hx) #   RSU5(64,16,64,bins//4) # train.py: torch.Size([12, 64, 64, 128])
+        hx = self.pool34(hx3) # nn.AvgPool2d(2,stride=2) # train.py: torch.Size([12, 64, 32, 64])
 
         #stage 4
-        hx4 = self.stage4(hx) #   RSU4(64,16,64,bins//8)
-        hx = self.pool45(hx4) # nn.AvgPool2d(2,stride=2)
+        hx4 = self.stage4(hx) #   RSU4(64,16,64,bins//8) # train.py: torch.Size([12, 64, 32, 64])
+        hx = self.pool45(hx4) # nn.AvgPool2d(2,stride=2) # train.py: torch.Size([12, 64, 16, 32])
 
         #stage 5
-        hx5 = self.stage5(hx) # RSU4F(64,16,64,bins//16)
-        hx = self.pool56(hx5) # nn.AvgPool2d(2,stride=2)
+        hx5 = self.stage5(hx) # RSU4F(64,16,64,bins//16) # train.py: torch.Size([12, 64, 16, 32])
+        hx = self.pool56(hx5) # nn.AvgPool2d(2,stride=2) # train.py: torch.Size([12, 64, 8, 16])
 
         #stage 6
-        hx6 = self.stage6(hx)
-        hx6up = _upsample_like(hx6,hx5)
+        hx6 = self.stage6(hx) # train.py: torch.Size([12, 64, 8, 16])
+        hx6up = _upsample_like(hx6,hx5) # train.py: torch.Size([12, 64, 16, 32])
 
         #decoder
-        hx5d = self.stage5d(torch.cat((hx6up,hx5),1))
-        hx5dup = _upsample_like(hx5d,hx4)
+        test = torch.cat((hx6up, hx5), 1) # torch.Size([12, 128, 16, 32])
+        hx5d = self.stage5d(torch.cat((hx6up,hx5),1)) # train.py: torch.Size([12, 64, 16, 32])
+        hx5dup = _upsample_like(hx5d,hx4) # train.py: torch.Size([12, 64, 32, 64])
 
-        hx4d = self.stage4d(torch.cat((hx5dup,hx4),1))
-        hx4dup = _upsample_like(hx4d,hx3)
+        hx4d = self.stage4d(torch.cat((hx5dup,hx4),1)) # train.py: torch.Size([12, 64, 32, 64])
+        hx4dup = _upsample_like(hx4d,hx3) # train.py: torch.Size([12, 64, 64, 128])
 
-        hx3d = self.stage3d(torch.cat((hx4dup,hx3),1))
-        hx3dup = _upsample_like(hx3d,hx2)
+        hx3d = self.stage3d(torch.cat((hx4dup,hx3),1)) # train.py: torch.Size([12, 64, 64, 128])
+        hx3dup = _upsample_like(hx3d,hx2) # train.py: torch.Size([12, 64, 128, 256])
 
-        hx2d = self.stage2d(torch.cat((hx3dup,hx2),1))
-        hx2dup = _upsample_like(hx2d,hx1)
+        hx2d = self.stage2d(torch.cat((hx3dup,hx2),1)) # train.py: torch.Size([12, 64, 128, 256])
+        hx2dup = _upsample_like(hx2d,hx1) # train.py: torch.Size([12, 64, 256, 513])
 
-        hx1d = self.stage1d(torch.cat((hx2dup,hx1),1))
+        hx1d = self.stage1d(torch.cat((hx2dup,hx1),1)) # train.py: torch.Size([12, 64, 256, 513])
 
         #side output
-        d1 = self.side1(hx1d)
-        d1 = d1.permute(0, 1, 3, 2)
-        d2 = self.side2(hx1d)
-        d2 = d2.permute(0, 1, 3, 2)
+        d1 = self.side1(hx1d) # train.py: torch.Size([12, 2, 256, 513])
+        d1 = d1.permute(0, 1, 3, 2) # train.py: torch.Size([12, 2, 513, 256])
+        d2 = self.side2(hx1d) # train.py: torch.Size([12, 2, 256, 513])
+        d2 = d2.permute(0, 1, 3, 2) # train.py: torch.Size([12, 2, 513, 256])
         return mix*F.relu(d1), d2
 
 if __name__ == "__main__":
