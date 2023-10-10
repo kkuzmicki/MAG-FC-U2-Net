@@ -28,6 +28,7 @@ def istft(X, rate=16000, n_fft=1024, n_hopsize=512):
 def median_nan(a):
     return np.median(a[~np.isnan(a)])
 
+# (test, after that evaluate) in loop
 def test_eval(args):
     tracks = []
     p = Path(args.root, 'test')
@@ -38,7 +39,7 @@ def test_eval(args):
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    result = pd.DataFrame(columns=['track', 'SDR', 'ISR', 'SIR', 'SAR'])
+    result = pd.DataFrame(columns=['track', 'SDR', 'ISR', 'SIR', 'SAR']) # why 'inf' SIR: https://github.com/craffel/mir_eval/issues/260
     reference_dir = Path(args.root, 'test')
     output_dir = Path(args.output_dir, Path(args.model).name, 'museval')
 
@@ -52,7 +53,7 @@ def test_eval(args):
             device=device, # type='cuda'
         )
 
-        output_path = Path(args.output_dir, Path(args.model).stem, 'estimates', Path(input_file).parent.name)
+        output_path = Path(args.output_dir, Path(args.model).stem, 'estimates', Path(input_file).parent.name) # eval/musdb16_model_first/estimates/Al James - Schoolboy Facination
         output_path.mkdir(exist_ok=True, parents=True)
 
         sf.write(
@@ -61,23 +62,23 @@ def test_eval(args):
             params['sample_rate']
         )
 
-        estdir = output_path
-        refdir = Path(reference_dir, estdir.name)
+        estdir = output_path # eval/musdb16_model_first/estimates/Al James - Schoolboy Facination
+        refdir = Path(reference_dir, estdir.name) # C:/Users/kkuzm/Desktop/MAG-FC-U2-Net/DATASET_16kHz_2channels/test/Al James
         if refdir.exists():
-            ref, sr = sf.read(str(Path(refdir, args.target + '.wav')), always_2d=True)
-            est, sr = sf.read(str(Path(estdir, args.target + '.wav')), always_2d=True)
-            ref = ref[None, ...]
-            est = est[None, ...]
+            ref, sr = sf.read(str(Path(refdir, args.target + '.wav')), always_2d=True) # ref=(3205468, 2) # sr=16000
+            est, sr = sf.read(str(Path(estdir, args.target + '.wav')), always_2d=True) # est=(3205468, 2) # sr=16000
+            ref = ref[None, ...] # (1, 3205468, 2)
+            est = est[None, ...] # (1, 3205468, 2)
 
             SDR, ISR, SIR, SAR = museval.evaluate(ref, est, win=sr, hop=sr)
             values = {
-                'track': estdir.name,
-                "SDR":   median_nan(SDR[0]),
-                "ISR":   median_nan(ISR[0]),
-                "SIR":   median_nan(SIR[0]),
-                "SAR":   median_nan(SAR[0])
+                'track': estdir.name, # 'Al James - Schoolboy Facination'
+                "SDR":   median_nan(SDR[0]), # SDR=(1, 200)
+                "ISR":   median_nan(ISR[0]), # ISR=(1, 200)
+                "SIR":   median_nan(SIR[0]), # SIR=(1, 200)
+                "SAR":   median_nan(SAR[0])  # SAR=(1, 200)
             }
-            result.loc[result.shape[0]] = values
+            result.loc[result.shape[0]] = values # (number_of_songs, 5<<<columns) # shape increases after each new record addition
         # print(values)
         # break
     values = {
@@ -88,8 +89,9 @@ def test_eval(args):
         "SAR": result['SAR'].median()
     }
     result.loc[result.shape[0]] = values
-    print(list((result.loc[result.shape[0] - 1])[1:]))
-    result.to_csv(str(output_dir)+'.csv',index=0)
+    print('Summary: ')
+    print(list((result.loc[result.shape[0] - 1])[1:])) # displays last row
+    result.to_csv(str(output_dir)+'.csv',index=0) # saves to CSV file
 
 
 
@@ -177,16 +179,16 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='MUSIC test')
 
-    # vocals   accompaniment
+    # vocals accompaniment
     parser.add_argument('--target', type=str, default='vocals')
 
     parser.add_argument('--model', type=str, default='C:\\Users\\kkuzm\\Desktop\\MAG-FC-U2-Net\\models\\musdb16_model_first')
 
-    parser.add_argument('--root', type=str, default='C:\\Users\\kkuzm\\Desktop\\MAG-FC-U2-Net\\DATASET_16kHz_2channels')
+    parser.add_argument('--root', type=str, default='C:\\Users\\kkuzm\\Desktop\\MAG-FC-U2-Net\\miniDATASET_16kHz_2channels')
 
     parser.add_argument('--input', type=str, default='mixture.wav')
 
-    parser.add_argument('--output_dir', type=str, default='./eval')
+    parser.add_argument('--output_dir', type=str, default='./minieval')
 
     parser.add_argument('--no-cuda', action='store_true', default=False)
 
