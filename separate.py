@@ -52,23 +52,23 @@ def load_model(target, model_name='umxhq', device=torch.device("cpu")):
 
 def transform(audio, model, fft, hop, device): # audio >>> torch.Size([2, 130560])
     with torch.no_grad():
-        audio_stft = utils.STFT(audio[None, ...], None, fft, hop) # audio_stft's size: torch.Size([1, 2, 513, 128, 2]); in index: None == np.newaxis
-        audio_torch = utils.Spectrogram(audio_stft) # audio_torch's shape: torch.Size([1, 2, 513, 128])
+        audio_stft = utils.STFT(audio[None, ...], None, fft, hop) # audio_stft's size: torch.Size([1, 2, 513, 256, 2]); in index: None == np.newaxis
+        audio_torch = utils.Spectrogram(audio_stft) # audio_torch's shape: torch.Size([1, 2, 513, 256])
         audio_torch = audio_torch.to(device)
-        mag_target = model(audio_torch)
+        # mag_target = model(audio_torch) why was it in original?
 
         mag_target, mag_mask = model(audio_torch)
         mag_target = mag_target * F.sigmoid(mag_mask)
         mag_target = mag_target.cpu().detach()
 
-        mag_target = mag_target.reshape(-1, mag_target.shape[-2], mag_target.shape[-1]) # after: torch.Size([2, 513, 128])
-        X = torch.stft(audio, fft, hop, window=torch.hann_window(fft), return_complex=True) # after: torch.Size([2, 513, 256])
+        mag_target = mag_target.reshape(-1, mag_target.shape[-2], mag_target.shape[-1]) # after: torch.Size([2, 513, 256])
+        X = torch.stft(audio, fft, hop, window=torch.hann_window(fft), return_complex=True) # after: torch.Size([2, 513, 256])  # CHECK
         #magnitude, phase = ex.magphase(X) # https://pytorch.org/audio/0.9.0/_modules/torchaudio/functional/functional.html#magphase
         #X = torch.view_as_complex(X)
         magnitude = torch.abs(X) # torch.Size([2, 513, 256])
         phase = torch.angle(X) # torch.Size([2, 513, 256])
-        complex = torch.stack((mag_target * torch.cos(phase), mag_target * torch.sin(phase)), -1)
-        complex = torch.view_as_complex(complex) # prototype
+        complex = torch.stack((mag_target * torch.cos(phase), mag_target * torch.sin(phase)), -1) # test.py: torch.Size([2, 513, 256, 2])
+        complex = torch.view_as_complex(complex) # prototype # test.py: torch.Size([2, 513, 256])
         audio_hat = torch.istft(complex, fft, hop, fft, torch.hann_window(fft)).numpy() # https://pytorch.org/docs/stable/generated/torch.istft.html
 
     return audio_hat

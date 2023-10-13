@@ -54,7 +54,7 @@ class FC(nn.Module):
     def forward(self, x):
         return self.fc(x)
 
-### RSU-7 ###
+### RSU-7 ### # de_2 de_4 attention
 class RSU7(nn.Module):#UNet07DRES(nn.Module):
 
     def __init__(self, in_ch=3, mid_ch=12, out_ch=3,bins=64):
@@ -337,6 +337,7 @@ class RSU4F(nn.Module):#UNet04FRES(nn.Module):
         self.rebnconv2d = REBNCONV(mid_ch*2,mid_ch,dirate=2)
         self.rebnconv1d = REBNCONV(mid_ch*2,out_ch,dirate=1)
         self.fc = FC(out_ch,bins)
+        
     def forward(self,x):
 
         hx = x

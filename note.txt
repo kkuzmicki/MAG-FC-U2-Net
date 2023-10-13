@@ -9,3 +9,11 @@ kernel = filter = feature detector <<< https://stats.stackexchange.com/questions
 
 
 dobre o CNN: https://indoml.com/2018/03/07/student-notes-convolutional-neural-networks-cnn-introduction/
+
+
+TODO
+1. Dodać blok atencji (de_4 i de_2 próbować)
+2. Dodanie warstw
+3. Loss function (psnr)
+4. Usunięcie warstw
+5. Zmiana liczby kanałów (to już kosmetyka, tzw. 'tuning')

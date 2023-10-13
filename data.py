@@ -100,7 +100,7 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
         index = index // self.samples_per_track # 2502 // 32 floor division is division with round down (i.e. 2.4 >>> 2)
 
         track_path = self.tracks[index]['path']
-        min_duration = self.tracks[index]['min_duration']
+        min_duration = self.tracks[index]['min_duration'] # 2739954 - so: 2739954 / 16000 = 
         if self.random_chunks: # get random start of song
             start = random.randint(0, min_duration - self.seq_duration) # song's duration - seq_duration
         else:
@@ -178,8 +178,6 @@ class FixedSourcesTrackFolderDataset(torch.utils.data.Dataset):
                 else:
                     yield ({'path': track_path, 'min_duration': None}) # return do listy?
 
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Dataset Test')
     parser.add_argument('--root', type=str, default='DATASET_16kHz_2channels') # data root with train and test folders, deeper with song folders
@@ -198,7 +196,7 @@ if __name__ == "__main__":
     parser.add_argument('--samples-per-track', type=int, default=32)
     parser.add_argument('--seed', type=int, default=42, metavar='S')
     args, _ = parser.parse_known_args()
-    
+
     #train_dataset's type is: FixedSourcesTrackFolderDataset(torch.utils.data.Dataset)
     train_dataset = load_datasets(args) # I deleted parser as argument and args from vars
 

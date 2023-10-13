@@ -54,14 +54,14 @@ def train(args, model, device, train_loader, optimizer, scaler):
         X = X[:,:,:args.bins,:] # train.py: torch.Size([12, 2, 513, 256]) (arg.bins by default is 513) IF IN STFT RETURN_COMPLEX=FALSE, THEN torch.Size([12, 2, 513, 256])
         Y = Y[:,:,:args.bins,:] # train.py: torch.Size([12, 2, 513, 256])
         
-        mask = torch.ones_like(Y).to(device) # Returns a tensor filled with the scalar value 1, with the same size as input # train.py: torch.Size([12, 2, 513, 128])
+        mask = torch.ones_like(Y).to(device) # Returns a tensor filled with the scalar value 1, with the same size as input # train.py: torch.Size([12, 2, 513, 256])
         mask[Y*10/5<X] = 0.0 # torch.Size([12, 2, 513, 256])
         optimizer.zero_grad() # Sets the gradients of all optimized torch. Tensor s to zero.
 
         # print(X.shape)
         with torch.cuda.amp.autocast():
 
-            Y_est,Y_mask = model(X) # train.py: Y_est=torch.Size([12, 2, 513, 256]) Y_mask=torch.Size([12, 2, 513, 256])
+            Y_est, Y_mask = model(X) # train.py: Y_est=torch.Size([12, 2, 513, 256]) Y_mask=torch.Size([12, 2, 513, 256])
             loss = F.mse_loss(Y_est, Y) + F.binary_cross_entropy_with_logits(Y_mask, mask) # train.py: tensor(1.5345, device='cuda:0', grad_fn=<AddBackward0>)
             # F.mse_loss(Y_est*F.sigmoid(Y_mask), Y*mask)
 
@@ -76,18 +76,18 @@ def train(args, model, device, train_loader, optimizer, scaler):
 
 def get_parser():
     parser = argparse.ArgumentParser(description='Music Separation Training')
-    parser.add_argument('--local_rank', type=int, default=0)
-    parser.add_argument('--nprocs', type=int)
-    parser.add_argument('--root', type=str, default='DATASET_16kHz_2channels')
+    parser.add_argument('--local_rank', type=int, default=0) # ??? https://medium.com/red-buffer/getting-started-with-pytorch-distributed-54ae933bb9f0 ???
+    parser.add_argument('--nprocs', type=int) # not used
+    parser.add_argument('--root', type=str, default='DATASET_16kHz_2channels') # source of training data
 
-    parser.add_argument('--model', type=str, default="models/musdb16_model_first_v4")
+    parser.add_argument('--model', type=str, default="models/musdb16_model_first_v4") # name for model (may already exist)
     parser.add_argument('--pretrained', dest='pretrained', action='store_true') # creates new model
     #parser.add_argument('--pretrained', type=bool, default='true') # uses saved model
-    parser.add_argument('--target', type=str, default='vocals')
+    parser.add_argument('--target', type=str, default='vocals') # what source to extract
 
-    parser.add_argument('--sample-rate', type=int, default=16000)
-    parser.add_argument('--channels', type=int, default=2)
-    parser.add_argument('--samples-per-track', type=int, default=100)
+    parser.add_argument('--sample-rate', type=int, default=16000) # sample rate of source songs
+    parser.add_argument('--channels', type=int, default=2) # number of channels of source songs
+    parser.add_argument('--samples-per-track', type=int, default=100) # how many fragments per each song
 
     # Training Parameters
     parser.add_argument('--epochs', type=int, default=250)

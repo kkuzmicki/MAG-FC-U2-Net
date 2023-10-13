@@ -144,7 +144,6 @@ class EarlyStopping(object):
         if mode == 'max':
             self.is_better = lambda a, best: a > best + min_delta
 
-
 def STFT(x, device, n_fft=4096, n_hop=1024): # n_fft = 1024; n_hop = 512
     nb_samples, nb_channels, nb_timesteps = x.size() # train.py: torch.Size([12, 2, 130560]) # 12 is number of songs
     x = x.reshape(nb_samples * nb_channels, -1) # train.py: shape[24, 130560]; test.py: torch.Size([2, 130560]) # channels and songs merge here as each one separate track (so for 2 ch it doubles)
