@@ -36,7 +36,7 @@ torch.backends.cudnn.benchmark = True # https://discuss.pytorch.org/t/what-does-
 # 6. For this output, loss function's value is calculated
 # 7. This loss function's value is given to scaler
 # 8. Scaler gives it to optimizer
-# 9. Optimizer changes weights etc.
+# 9. Optimizer changes weights etc. # each batch (default=12) changes weights - NOT EACH EPOCH (as I thought)
 # 10. Loss value is saved
 # 11. Repeat for each song multiple times
 # 12. At the end of each epoch, this function returns average of all loss values from this epoch
@@ -67,7 +67,7 @@ def train(args, model, device, train_loader, optimizer, scaler):
 
         scaler.scale(loss).backward()
         scaler.step(optimizer)
-        scaler.update() # each batch (default=12) changes weights - NOT EACH EPOCH (as I thought)
+        scaler.update()
 
         losses.append(loss.item())
 
@@ -134,11 +134,9 @@ def main():
     ) # this shuffle works with torch's random - seed
 
     model = u2net(2,2,args.bins).to(device)
-    # model = myModel(args).to(device)
 
-    # https://www.analyticsvidhya.com/blog/2021/10/a-comprehensive-guide-on-deep-learning-optimizers/
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.3)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay) # I think optimizer only takes parameters, without real reference to model
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.3) # https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.StepLR.html
     scaler = torch.cuda.amp.GradScaler()
     es = utils.EarlyStopping(patience=args.patience)
 
@@ -167,7 +165,7 @@ def main():
     for epoch in pbar:
 
         train_loss = train(args, model, device, train_loader, optimizer, scaler)
-        scheduler.step()
+        scheduler.step() # each number of epoch (40) multiply learning rate by gamma (0.3)
 
         train_losses.append(train_loss)
         pbar.set_postfix(loss=train_loss,lr=optimizer.state_dict()['param_groups'][0]['lr'])
