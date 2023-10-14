@@ -36,8 +36,8 @@ torch.backends.cudnn.benchmark = True # https://discuss.pytorch.org/t/what-does-
 # 6. For this output, loss function's value is calculated
 # 7. This loss function's value is given to scaler
 # 8. Scaler gives it to optimizer
-# 9. Optimizer changes weights etc. (directly not visible in code below)
-# 10. loss value is saved
+# 9. Optimizer changes weights etc.
+# 10. Loss value is saved
 # 11. Repeat for each song multiple times
 # 12. At the end of each epoch, this function returns average of all loss values from this epoch
 def train(args, model, device, train_loader, optimizer, scaler):
@@ -63,11 +63,11 @@ def train(args, model, device, train_loader, optimizer, scaler):
 
             Y_est, Y_mask = model(X) # train.py: Y_est=torch.Size([12, 2, 513, 256]) Y_mask=torch.Size([12, 2, 513, 256])
             loss = F.mse_loss(Y_est, Y) + F.binary_cross_entropy_with_logits(Y_mask, mask) # train.py: tensor(1.5345, device='cuda:0', grad_fn=<AddBackward0>)
-            # F.mse_loss(Y_est*F.sigmoid(Y_mask), Y*mask)
+            # F.mse_loss(Y_est*F.sigmoid(Y_mask), Y*mask) # psnr
 
         scaler.scale(loss).backward()
         scaler.step(optimizer)
-        scaler.update()
+        scaler.update() # each batch (default=12) changes weights - NOT EACH EPOCH (as I thought)
 
         losses.append(loss.item())
 
