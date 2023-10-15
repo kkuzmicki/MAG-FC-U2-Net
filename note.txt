@@ -22,5 +22,9 @@ TODO
 
 ##############
 
-CUDA 11.8 (800x600) >>> 3,59 it/s
-CUDA 12.1 (800x600) >>> 3,66 it/s
+CUDA 11.8 (800x600) basic model >>> 3,59 it/s
+CUDA 12.1 (800x600) basic model >>> 3,66 it/s
+AFTER FIX
+CUDA 11.8 (800x600) basic model >>> 4,01 it/s
+CUDA 12.1 (800x600) basic model >>> 4,10 it/s - w stosunku do poprzedniej wersji CUDA zysk 5 sekund,
+co daje 20 minut w skali 250-epokowego uczenia. Całość uczenia: ~14h 15min

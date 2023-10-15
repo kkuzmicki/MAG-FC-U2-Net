@@ -23,7 +23,7 @@ class REBNCONV(nn.Module):
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self,x): # train.py (RSU7): torch.Size([12, 2, 256, 513])
-        test = self.conv(x) # train.py (RSU7): torch.Size([12, 64, 256, 513]) - probably works on 3 last dimensions
+        # test = self.conv(x) # train.py (RSU7): torch.Size([12, 64, 256, 513]) - probably works on 3 last dimensions
         x = self.relu(self.bn(self.conv(x)))
 
         return x # train.py: torch.Size([12, 64, 256, 513])
