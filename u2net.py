@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import u2net_attention as att
+
 # despite of seed usage, program isn't deterministic:
 # proof: https://discuss.pytorch.org/t/random-seed-with-external-gpu/102260
 # ---------------
@@ -383,6 +385,7 @@ class u2net(nn.Module):
 
         # decoder
         self.stage5d = RSU4F(128,16,64,bins//16)
+        self.stage4attention = att.ChannelWiseAttention(128, 16)
         self.stage4d = RSU4(128,16,64,bins//8)
         self.stage3d = RSU5(128,16,64,bins//4)
         self.stage2d = RSU6(128,16,64,bins//2)
@@ -431,7 +434,11 @@ class u2net(nn.Module):
         hx5d = self.stage5d(torch.cat((hx6up,hx5),1)) # train.py: torch.Size([12, 64, 16, 32])
         hx5dup = _upsample_like(hx5d,hx4) # train.py: torch.Size([12, 64, 32, 64])
 
-        hx4d = self.stage4d(torch.cat((hx5dup,hx4),1)) # train.py: torch.Size([12, 64, 32, 64])
+        # --- attention ---
+        hx4att = self.stage4attention(torch.cat((hx5dup,hx4),1)) # move '16' to params CHANGE!!! INIT IN INIT
+        # --- attention ---
+
+        hx4d = self.stage4d(hx4att) # train.py: torch.Size([12, 64, 32, 64])
         hx4dup = _upsample_like(hx4d,hx3) # train.py: torch.Size([12, 64, 64, 128])
 
         hx3d = self.stage3d(torch.cat((hx4dup,hx3),1)) # train.py: torch.Size([12, 64, 64, 128])
