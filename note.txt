@@ -12,7 +12,7 @@ dobre o CNN: https://indoml.com/2018/03/07/student-notes-convolutional-neural-ne
 
 
 TODO
-1. Dodać blok atencji (de_4 i de_2 próbować) >>> https://paperswithcode.com/method/channel-attention-module
+1. Dodać blok atencji (między concat a de_4 i między concat a de_2 próbować) >>> https://paperswithcode.com/method/channel-attention-module
 2. Dodanie warstw
 3. Loss function (psnr)
 4. Usunięcie warstw

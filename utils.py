@@ -58,14 +58,11 @@ def soundfile_loader(path, start=0, dur=None):
     )
     return torch.FloatTensor(audio.T)
 
-
 def load_info(path):
     return torchaudio_info(path)
 
-
 def load_audio(path, start=0, dur=None):
     return torchaudio_loader(path, start=start, dur=dur)
-
 
 def bandwidth_to_max_bin(rate, n_fft, bandwidth):
     freqs = np.linspace(
@@ -74,7 +71,6 @@ def bandwidth_to_max_bin(rate, n_fft, bandwidth):
     )
     return np.max(np.where(freqs <= bandwidth)[0]) + 1
 
-
 def save_checkpoint(state, is_best, path, target):
     torch.save(state, os.path.join(path, target + '.chkpnt'))
     if is_best:
@@ -82,8 +78,6 @@ def save_checkpoint(state, is_best, path, target):
 
     if state['epoch']%5==0 and state['epoch']>100:
         torch.save(state['state_dict'], os.path.join(path, target + str(state['epoch']) +'.pth'))
-    
-
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -102,7 +96,6 @@ class AverageMeter(object):
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
-
 
 class EarlyStopping(object):
     def __init__(self, mode='min', min_delta=0, patience=10):

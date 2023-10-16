@@ -94,6 +94,7 @@ def get_parser():
     parser.add_argument('--batch-size', type=int, default=12) # originally 12
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--patience', type=int, default=30) # originally 80
+    parser.add_argument('--reduction_ratio', type=int, default=16) # ATTENTION
     parser.add_argument('--weight-decay', type=float, default=0.00001)
     parser.add_argument('--seed', type=int, default=42, metavar='S')
 
@@ -133,7 +134,7 @@ def main():
         num_workers=args.nb_workers, pin_memory=False
     ) # this shuffle works with torch's random - seed
 
-    model = u2net(2,2,args.bins).to(device)
+    model = u2net(2,2,args.bins,args.reduction_ratio).to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay) # I think optimizer only takes parameters, without real reference to model
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.3) # https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.StepLR.html

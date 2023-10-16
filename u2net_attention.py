@@ -25,7 +25,8 @@ class ChannelWiseAttention(nn.Module):
         
         return scaled_features
     
-############################################
+#########################################################################
+# https://github.com/Jongchan/attention-module/blob/master/MODELS/cbam.py
 
 import torch.nn.functional as F
 
@@ -38,10 +39,10 @@ class BasicConv(nn.Module):
         self.relu = nn.ReLU() if relu else None
 
     def forward(self, x):
-        x = self.conv(x)
+        x = self.conv(x) # torch.Size([12, 1, 32, 64])
         if self.bn is not None:
-            x = self.bn(x)
-        if self.relu is not None:
+            x = self.bn(x) # train.py: torch.Size([12, 1, 32, 64])
+        if self.relu is not None: # train.py: False
             x = self.relu(x)
         return x
 
@@ -52,28 +53,34 @@ class Flatten(nn.Module):
 class ChannelGate(nn.Module):
     def __init__(self, gate_channels, reduction_ratio=16, pool_types=['avg', 'max']):
         super(ChannelGate, self).__init__()
+
         self.gate_channels = gate_channels
+
         self.mlp = nn.Sequential(
             Flatten(),
             nn.Linear(gate_channels, gate_channels // reduction_ratio),
             nn.ReLU(),
             nn.Linear(gate_channels // reduction_ratio, gate_channels)
             )
+        
         self.pool_types = pool_types
         
     def forward(self, x):
+
         channel_att_sum = None
+
         for pool_type in self.pool_types:
-            if pool_type=='avg':
-                avg_pool = F.avg_pool2d( x, (x.size(2), x.size(3)), stride=(x.size(2), x.size(3)))
-                channel_att_raw = self.mlp( avg_pool )
-            elif pool_type=='max':
-                max_pool = F.max_pool2d( x, (x.size(2), x.size(3)), stride=(x.size(2), x.size(3)))
-                channel_att_raw = self.mlp( max_pool )
-            elif pool_type=='lp':
+
+            if pool_type == 'avg':
+                avg_pool = F.avg_pool2d( x, (x.size(2), x.size(3)), stride=(x.size(2), x.size(3))) # train.py: torch.Size([12, 128, 1, 1])
+                channel_att_raw = self.mlp( avg_pool ) # train.py: torch.Size([12, 128])
+            elif pool_type == 'max':
+                max_pool = F.max_pool2d( x, (x.size(2), x.size(3)), stride=(x.size(2), x.size(3))) # train.py: torch.Size([12, 128, 1, 1])
+                channel_att_raw = self.mlp( max_pool ) # train.py: torch.Size([12, 128])
+            elif pool_type == 'lp':
                 lp_pool = F.lp_pool2d( x, 2, (x.size(2), x.size(3)), stride=(x.size(2), x.size(3)))
                 channel_att_raw = self.mlp( lp_pool )
-            elif pool_type=='lse':
+            elif pool_type == 'lse':
                 # LSE pool only
                 lse_pool = logsumexp_2d(x)
                 channel_att_raw = self.mlp( lse_pool )
@@ -83,7 +90,7 @@ class ChannelGate(nn.Module):
             else:
                 channel_att_sum = channel_att_sum + channel_att_raw
 
-        scale = F.sigmoid( channel_att_sum ).unsqueeze(2).unsqueeze(3).expand_as(x)
+        scale = F.sigmoid( channel_att_sum ).unsqueeze(2).unsqueeze(3).expand_as(x) # train.py: torch.Size([12, 128, 32, 64])
         return x * scale
 
 def logsumexp_2d(tensor):
@@ -103,22 +110,26 @@ class SpatialGate(nn.Module):
         self.compress = ChannelPool()
         self.spatial = BasicConv(2, 1, kernel_size, stride=1, padding=(kernel_size-1) // 2, relu=False)
 
-    def forward(self, x):
-        x_compress = self.compress(x)
-        x_out = self.spatial(x_compress)
-        scale = F.sigmoid(x_out) # broadcasting
+    def forward(self, x): # train.py: x's shape=torch.Size([12, 128, 32, 64])
+        x_compress = self.compress(x) # train.py: torch.Size([12, 2, 32, 64])
+        x_out = self.spatial(x_compress) # train.py: torch.Size([12, 1, 32, 64])
+        scale = F.sigmoid(x_out) # broadcasting # train.py: torch.Size([12, 1, 32, 64])
         return x * scale
 
 class CBAM(nn.Module):
-    def __init__(self, gate_channels, reduction_ratio=16, pool_types=['avg', 'max'], no_spatial=False):
+    def __init__(self, gate_channels, reduction_ratio=16, pool_types=['avg', 'max'], is_spatial=True):
         super(CBAM, self).__init__()
+
         self.ChannelGate = ChannelGate(gate_channels, reduction_ratio, pool_types)
-        self.no_spatial=no_spatial
-        if not no_spatial:
+        self.is_spatial = is_spatial
+
+        if is_spatial:
             self.SpatialGate = SpatialGate()
 
-    def forward(self, x):
-        x_out = self.ChannelGate(x)
-        if not self.no_spatial:
-            x_out = self.SpatialGate(x_out)
+    def forward(self, x): # train.py (before 4th decoder): torch.Size([12, 128, 32, 64])
+        x_out = self.ChannelGate(x) # train.py: torch.Size([12, 128, 32, 64])
+
+        if self.is_spatial:
+            x_out = self.SpatialGate(x_out) # train.py: torch.Size([12, 128, 32, 64])
+
         return x_out
