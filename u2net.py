@@ -363,7 +363,7 @@ class RSU4F(nn.Module):#UNet04FRES(nn.Module):
 ### U^2-Net small ###
 class u2net(nn.Module):
 
-    def __init__(self,in_ch=2,out_ch=2,bins=64,reduction_ratio=16): # added '=64'
+    def __init__(self, in_ch = 2, out_ch = 2, bins = 64, att_reduction_ratio = 16): # added '=64'
         super(u2net,self).__init__()
 
         self.stage1 = RSU7(in_ch,16,64,bins)
@@ -386,9 +386,10 @@ class u2net(nn.Module):
         # decoder
         self.stage5d = RSU4F(128,16,64,bins//16)
         #self.stage4attention = att.ChannelWiseAttention(128, 16)
-        self.stage4attention = att.CBAM(128, reduction_ratio)
+        self.stage4attention = att.CBAM(128, att_reduction_ratio)
         self.stage4d = RSU4(128,16,64,bins//8)
         self.stage3d = RSU5(128,16,64,bins//4)
+        self.stage2attention = att.CBAM(128, att_reduction_ratio)
         self.stage2d = RSU6(128,16,64,bins//2)
         self.stage1d = RSU7(128,16,64,bins)
 
@@ -445,7 +446,11 @@ class u2net(nn.Module):
         hx3d = self.stage3d(torch.cat((hx4dup,hx3),1)) # train.py: torch.Size([12, 64, 64, 128])
         hx3dup = _upsample_like(hx3d,hx2) # train.py: torch.Size([12, 64, 128, 256])
 
-        hx2d = self.stage2d(torch.cat((hx3dup,hx2),1)) # train.py: torch.Size([12, 64, 128, 256])
+        # --- attention ---
+        hx2att = self.stage2attention(torch.cat((hx3dup,hx2),1)) # train.py: torch.Size([12, 128, 32, 64])
+        # --- attention ---
+
+        hx2d = self.stage2d(hx2att) # train.py: torch.Size([12, 64, 128, 256])
         hx2dup = _upsample_like(hx2d,hx1) # train.py: torch.Size([12, 64, 256, 513])
 
         hx1d = self.stage1d(torch.cat((hx2dup,hx1),1)) # train.py: torch.Size([12, 64, 256, 513])
