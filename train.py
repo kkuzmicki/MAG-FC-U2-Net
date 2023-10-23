@@ -80,7 +80,7 @@ def get_parser():
     parser.add_argument('--nprocs', type=int) # not used
     parser.add_argument('--root', type=str, default='DATASET_16kHz_2channels') # source of training data
 
-    parser.add_argument('--model', type=str, default="models/musdb16_model_first_v4") # name for model (may already exist)
+    parser.add_argument('--model', type=str, default="models/musdb16_model_reduction") # name for model (may already exist)
     parser.add_argument('--pretrained', dest='pretrained', action='store_true') # creates new model
     #parser.add_argument('--pretrained', type=bool, default='true') # uses saved model
     parser.add_argument('--target', type=str, default='vocals') # what source to extract
