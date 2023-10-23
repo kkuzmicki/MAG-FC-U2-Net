@@ -184,11 +184,11 @@ if __name__ == '__main__':
 
     parser.add_argument('--model', type=str, default='C:\\Users\\kkuzm\\Desktop\\MAG-FC-U2-Net\\models\\musdb16_model_first')
 
-    parser.add_argument('--root', type=str, default='C:\\Users\\kkuzm\\Desktop\\MAG-FC-U2-Net\\miniDATASET_16kHz_2channels')
+    parser.add_argument('--root', type=str, default='C:\\Users\\kkuzm\\Desktop\\MAG-FC-U2-Net\\DATASET_16kHz_2channels')
 
     parser.add_argument('--input', type=str, default='mixture.wav')
 
-    parser.add_argument('--output_dir', type=str, default='./minieval')
+    parser.add_argument('--output_dir', type=str, default='./eval')
 
     parser.add_argument('--no-cuda', action='store_true', default=False)
 

@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import u2net_attention_block
+
 # despite of seed usage, program isn't deterministic:
 # proof: https://discuss.pytorch.org/t/random-seed-with-external-gpu/102260
 # ---------------
