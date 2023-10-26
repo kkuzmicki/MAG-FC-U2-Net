@@ -381,9 +381,13 @@ class u2net(nn.Module):
         self.stage5 = RSU4F(64,16,64,bins//16) # originally RSU4F(64,16,64,bins//16)
         self.pool56 = nn.AvgPool2d(2,stride=2)
 
-        self.stage6 = RSU4F(64,16,64,bins//32) # originally RSU4F(64,16,64,bins//32)
+        self.stage5_ADDED = RSU4F(64,16,64,bins//32)
+        self.pool56_ADDED = nn.AvgPool2d(2,stride=2)
+
+        self.stage6 = RSU4F(64,16,64,bins//64) # originally RSU4F(64,16,64,bins//32)
 
         # decoder
+        self.stage5d_ADDED = RSU4F(128,16,64,bins//32)
         self.stage5d = RSU4F(128,16,64,bins//16)
         self.stage4d = RSU4(128,16,64,bins//8)
         self.stage3d = RSU5(128,16,64,bins//4)
@@ -424,13 +428,20 @@ class u2net(nn.Module):
         hx5 = self.stage5(hx) # RSU4F(64,16,64,bins//16) # train.py: torch.Size([12, 64, 16, 32])
         hx = self.pool56(hx5) # nn.AvgPool2d(2,stride=2) # train.py: torch.Size([12, 64, 8, 16])
 
+        hx5_ADDED = self.stage5_ADDED(hx) # train.py: torch.Size([12, 64, 8, 16])
+        hx = self.pool56_ADDED(hx5_ADDED) # train.py: torch.Size([12, 64, 4, 8])
+
         #stage 6
-        hx6 = self.stage6(hx) # train.py: torch.Size([12, 64, 8, 16])
-        hx6up = _upsample_like(hx6,hx5) # train.py: torch.Size([12, 64, 16, 32])
+        hx6 = self.stage6(hx) # train.py: torch.Size([12, 64, 4, 8]) OK
+        hx6up = _upsample_like(hx6,hx5_ADDED) # train.py: torch.Size([12, 64, 8, 16])
 
         #decoder
+
+        hx5d_ADDED = self.stage5d_ADDED(torch.cat((hx6up, hx5_ADDED),1))
+        hx5dup_ADDED = _upsample_like(hx5d_ADDED,hx5)
+
         #test = torch.cat((hx6up, hx5), 1) # torch.Size([12, 128, 16, 32])
-        hx5d = self.stage5d(torch.cat((hx6up,hx5),1)) # train.py: torch.Size([12, 64, 16, 32])
+        hx5d = self.stage5d(torch.cat((hx5dup_ADDED,hx5),1)) # train.py: torch.Size([12, 64, 16, 32])
         hx5dup = _upsample_like(hx5d,hx4) # train.py: torch.Size([12, 64, 32, 64])
 
         hx4d = self.stage4d(torch.cat((hx5dup,hx4),1)) # train.py: torch.Size([12, 64, 32, 64])
