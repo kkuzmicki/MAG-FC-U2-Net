@@ -182,7 +182,7 @@ if __name__ == '__main__':
     # vocals accompaniment
     parser.add_argument('--target', type=str, default='vocals')
 
-    parser.add_argument('--model', type=str, default='C:\\Users\\kkuzm\\Desktop\\MAG-FC-U2-Net\\models\\musdb16_model_attention_4b')
+    parser.add_argument('--model', type=str, default='C:\\Users\\kkuzm\\Desktop\\MAG-FC-U2-Net\\models\\musdb16_model_attention_4b_second_variant_changed_loss')
 
     parser.add_argument('--root', type=str, default='C:\\Users\\kkuzm\\Desktop\\MAG-FC-U2-Net\\DATASET_16kHz_2channels')
 
