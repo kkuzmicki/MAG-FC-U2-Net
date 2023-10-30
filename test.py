@@ -182,7 +182,7 @@ if __name__ == '__main__':
     # vocals accompaniment
     parser.add_argument('--target', type=str, default='vocals')
 
-    parser.add_argument('--model', type=str, default='C:\\Users\\kkuzm\\Desktop\\MAG-FC-U2-Net\\models\\musdb16_model_first')
+    parser.add_argument('--model', type=str, default='C:\\Users\\kkuzm\\Desktop\\MAG-FC-U2-Net\\models\\musdb16_model_loss_weight300_max1000')
 
     parser.add_argument('--root', type=str, default='C:\\Users\\kkuzm\\Desktop\\MAG-FC-U2-Net\\DATASET_16kHz_2channels')
 
@@ -194,4 +194,5 @@ if __name__ == '__main__':
 
     args, _ = parser.parse_known_args()
 
-    test_eval(args)
+    # test_eval(args)
+    eval_main(args)
