@@ -436,33 +436,34 @@ class u2net(nn.Module):
         hx6 = self.stage6(hx) # train.py: torch.Size([12, 64, 8, 16])
         hx6up = _upsample_like(hx6,hx5) # train.py: torch.Size([12, 64, 16, 32])
 
-        #decoder
-        #test = torch.cat((hx6up, hx5), 1) # torch.Size([12, 128, 16, 32])
+        # decoders
+
         hx5d = self.stage5d(torch.cat((hx6up,hx5),1)) # train.py: torch.Size([12, 64, 16, 32])
-        hx5dup = _upsample_like(hx5d,hx4) # train.py: torch.Size([12, 64, 32, 64])
         # --- attention --- #
-        hx5att = self.stage5attention(hx5dup) # train.py: torch.Size([12, 128, 32, 64])
+        hx5att = self.stage5attention(hx5d) # train.py: torch.Size([12, 64, 16, 32])
         # --- attention --- #
+        hx5dup = _upsample_like(hx5att,hx4) # train.py: torch.Size([12, 64, 32, 64])
 
-        hx4d = self.stage4d(torch.cat((hx5att,hx4),1)) # train.py: torch.Size([12, 64, 32, 64])
-        hx4dup = _upsample_like(hx4d,hx3) # train.py: torch.Size([12, 64, 64, 128])
+        hx4d = self.stage4d(torch.cat((hx5dup,hx4),1)) # train.py: torch.Size([12, 64, 32, 64])
         # --- attention ---
-        hx4att = self.stage4attention(hx4dup) # train.py: torch.Size([12, 128, 32, 64])
+        hx4att = self.stage4attention(hx4d) # train.py: torch.Size([12, 64, 32, 64])
         # --- attention ---
+        hx4dup = _upsample_like(hx4att,hx3) # train.py: torch.Size([12, 64, 64, 128])
 
-        hx3d = self.stage3d(torch.cat((hx4att,hx3),1)) # train.py: torch.Size([12, 64, 64, 128])
-        hx3dup = _upsample_like(hx3d,hx2) # train.py: torch.Size([12, 64, 128, 256])
+        hx3d = self.stage3d(torch.cat((hx4dup,hx3),1)) # train.py: torch.Size([12, 64, 64, 128])
         # --- attention ---
-        hx3att = self.stage3attention(hx3dup) # train.py: torch.Size([12, 128, 32, 64])
+        hx3att = self.stage3attention(hx3d) # train.py: torch.Size([12, 64, 64, 128])
         # --- attention ---
+        hx3dup = _upsample_like(hx3att,hx2) # train.py: torch.Size([12, 64, 128, 256])
 
-        hx2d = self.stage2d(torch.cat((hx3att,hx2),1)) # train.py: torch.Size([12, 64, 128, 256])
-        hx2dup = _upsample_like(hx2d,hx1) # train.py: torch.Size([12, 64, 256, 513])
+        hx2d = self.stage2d(torch.cat((hx3dup,hx2),1)) # train.py: torch.Size([12, 64, 128, 256])
         # --- attention ---
-        hx2att = self.stage2attention(hx2dup) # train.py: torch.Size([12, 128, 32, 64])
+        hx2att = self.stage2attention(hx2d) # train.py: torch.Size([12, 64, 128, 256])
         # --- attention ---
+        hx2dup = _upsample_like(hx2att,hx1) # train.py: torch.Size([12, 64, 256, 513])
+        
 
-        hx1d = self.stage1d(torch.cat((hx2att,hx1),1)) # train.py: torch.Size([12, 64, 256, 513])
+        hx1d = self.stage1d(torch.cat((hx2dup,hx1),1)) # train.py: torch.Size([12, 64, 256, 513])
 
         #side output
         d1 = self.side1(hx1d) # train.py: torch.Size([12, 2, 256, 513])
