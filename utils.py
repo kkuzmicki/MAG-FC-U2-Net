@@ -171,6 +171,9 @@ def Spectrogram(x):
     return x
     # return torch.log10(x + 1)
 
+def PSNR(MAX, MSE):
+    return 10 * math.log10((MAX ** 2) / MSE)
+
 if __name__ == "__main__":
     from scipy import signal
     import torch

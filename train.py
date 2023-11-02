@@ -62,7 +62,9 @@ def train(args, model, device, train_loader, optimizer, scaler):
         with torch.cuda.amp.autocast():
 
             Y_est, Y_mask = model(X) # train.py: Y_est=torch.Size([12, 2, 513, 256]) Y_mask=torch.Size([12, 2, 513, 256])
-            loss = F.mse_loss(Y_est, Y) + F.binary_cross_entropy_with_logits(Y_mask, mask) # train.py: tensor(1.5345, device='cuda:0', grad_fn=<AddBackward0>)
+            MSE = F.mse_loss(Y_est, Y)
+            PSNR_error = 100 / utils.PSNR(1000, MSE)
+            loss = MSE + F.binary_cross_entropy_with_logits(Y_mask, mask) + PSNR_error
             # F.mse_loss(Y_est*F.sigmoid(Y_mask), Y*mask) # psnr
 
         scaler.scale(loss).backward()
@@ -80,7 +82,7 @@ def get_parser():
     parser.add_argument('--nprocs', type=int) # not used
     parser.add_argument('--root', type=str, default='DATASET_16kHz_2channels') # source of training data
 
-    parser.add_argument('--model', type=str, default="models/musdb16_model_attention_2b") # name for model (may already exist)
+    parser.add_argument('--model', type=str, default="models/musdb16_model_attention_2b_w100_max1000") # name for model (may already exist)
     parser.add_argument('--pretrained', dest='pretrained', action='store_true') # creates new model
     #parser.add_argument('--pretrained', type=bool, default='true') # uses saved model
     parser.add_argument('--target', type=str, default='vocals') # what source to extract
